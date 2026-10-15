@@ -1,0 +1,15 @@
+ActionMan-0.1 weights: research preview licence
+
+Copyright (c) 2026 Shreyash Kumar Singh
+
+The model weights in this repository (model.safetensors) are released for research and evaluation use only.
+
+They were trained on data that includes Salesforce's xlam-function-calling-60k (CC-BY-4.0), whose dataset card states
+"This release is for research purposes only." Commercial use of these weights is not permitted under this preview licence.
+
+Other training data: Team-ACE/ToolACE (Apache-2.0) and NousResearch/hermes-function-calling-v1 (Apache-2.0).
+Base model: answerdotai/ModernBERT-large (Apache-2.0).
+
+The inference code in code/actionman/ is released under the MIT licence (see the GitHub repository).
+
+THE WEIGHTS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
