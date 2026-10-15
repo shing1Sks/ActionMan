@@ -10,6 +10,7 @@ arena races, finishes, block wipes), so the audio follows the animation even aft
   python make_music.py                 # -> music.wav (44.1 kHz stereo)
 """
 import json
+import sys
 import wave
 from functools import lru_cache
 from pathlib import Path
@@ -17,7 +18,10 @@ from pathlib import Path
 import numpy as np
 
 HERE = Path(__file__).resolve().parent
-CUES = json.loads((HERE / "cues.json").read_text()) if (HERE / "cues.json").exists() else {}
+# optional: python make_music.py <cues.json> <out.wav> (defaults: cues.json, music.wav)
+CUES_PATH = HERE / (sys.argv[1] if len(sys.argv) > 1 else "cues.json")
+OUT_PATH = HERE / (sys.argv[2] if len(sys.argv) > 2 else "music.wav")
+CUES = json.loads(CUES_PATH.read_text()) if CUES_PATH.exists() else {}
 SR = 44100
 DUR = float(CUES.get("duration", 128))
 N = int(SR * DUR)
@@ -374,9 +378,9 @@ mix = np.where(np.abs(mix) < 0.8, mix, np.sign(mix) * (0.8 + 0.18 * np.tanh((np.
 
 for name, x in (("drums", drums_x), ("bass", bass_mix), ("pad", pad_mix), ("arp", arp_mix), ("lead", ld_x), ("sfx", sfx.x), ("mix", mix)):
     print(f"{name:6s} rms {20 * np.log10(np.sqrt((x ** 2).mean()) + 1e-12):6.1f} dB  peak {np.abs(x).max():.2f}")
-with wave.open(str(HERE / "music.wav"), "wb") as f:
+with wave.open(str(OUT_PATH), "wb") as f:
     f.setnchannels(2)
     f.setsampwidth(2)
     f.setframerate(SR)
     f.writeframes((np.clip(mix.T, -1, 1) * 32767).astype("<i2").tobytes())
-print("wrote music.wav", "(cues.json found)" if CUES else "(no cues.json: music only, run node render.cjs --cues cues.json)")
+print("wrote", OUT_PATH.name, "(cues found)" if CUES else "(no cues.json: music only, run node render.cjs --cues cues.json)")

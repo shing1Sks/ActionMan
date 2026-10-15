@@ -53,7 +53,7 @@ const WIN_CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
   const from = Number(arg('from', 0)), to = Math.min(duration, Number(arg('to', duration)))
   // JPEG frames (q95) are ~3x faster to capture than PNG at 1080p and visually identical after x264
   const ff = spawn('ffmpeg', ['-y', '-v', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'mjpeg', '-i', '-',
-    '-c:v', 'libx264', '-preset', 'slow', '-crf', '16', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', path.resolve(__dirname, OUT)],
+    '-c:v', 'libx264', '-preset', arg('preset', 'slow'), '-threads', arg('threads', '0'), '-crf', '16', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', path.resolve(__dirname, OUT)],
   { stdio: ['pipe', 'inherit', 'inherit'] })
   const f0 = Math.round(from * FPS), f1 = Math.round(to * FPS), t0 = Date.now()
   for (let f = f0; f < f1; f++) {

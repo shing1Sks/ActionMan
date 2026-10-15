@@ -311,6 +311,18 @@
       "label": "server CPU (8 threads, fp32)",
       "actionman_s": "0.45",
       "llama_cpp_qwen_s": "1.66"
+    },
+    "api": {
+      "_source": "docs/results/benchmark.md Table 2: GPT-6 Luna API from the laptop, 100 prompts, network included (reference)",
+      "label": "GPT-6 Luna",
+      "engine": "API, network included",
+      "p50_ms": 1455
+    },
+    "by_calls": {
+      "_source": "docs/results/benchmark.md, median latency by gold calls (3+ row, n=50)",
+      "calls": "3+",
+      "am_ms": 21.0,
+      "llm_ms": 330.6
     }
   },
   "arena": {
@@ -349,7 +361,7 @@
         "game": "mining",
         "level": 1,
         "seed": 0,
-        "title": "Mining",
+        "title": "2D Minecraft",
         "line": "Dig to the diamond. Zombies don't wait."
       },
       {
@@ -395,5 +407,10 @@
     "github": "github.com/shing1Sks/ActionMan",
     "huggingface": "huggingface.co/shing-dev/ActionMan-0.1",
     "credit": "Research by Shreyash Kumar Singh with an AI coding agent (Claude)"
+  },
+  "launch": {
+    "tagline": "an action model",
+    "mechanism_example": "multiple_12",
+    "cold_open_example": "multiple_187"
   }
 }
