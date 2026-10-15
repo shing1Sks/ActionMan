@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ActionMan-0.1: a research film</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Pixelify+Sans:wght@500;700&display=block" rel="stylesheet">
+<style>
+  :root {
+    --r0: #14121c; --r1: #1c1926; --r2: #282435; --r3: #3a3549; --r4: #4a4459;
+    --chalk: #ece6da; --dust: #9a92a6; --dim: #6a6379;
+    --amber: #f2b35b; --cyan: #62e3ea; --ember: #e8634f;
+    --display: "Pixelify Sans", ui-monospace, monospace;
+    --body: "Instrument Sans", system-ui, sans-serif;
+    --mono: "JetBrains Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-variant-ligatures: none; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--r0); }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; color: var(--chalk); font-family: var(--body);
+           background: radial-gradient(1500px 760px at 50% -22%, #2b2442 0%, rgba(43, 36, 66, 0) 72%), var(--r0); }
+  .grain { position: absolute; inset: 0; pointer-events: none; z-index: 50; }   /* noise tile drawn once by script (cheap to composite) */
+  .scene { position: absolute; inset: 0; opacity: 0; visibility: hidden; }
+  .abs { position: absolute; }
+  .mono { font-family: var(--mono); }
+  .px { font-family: var(--display); }
+  .cy { color: var(--cyan); } .am { color: var(--amber); } .em { color: var(--ember); } .du { color: var(--dust); }
+  .label { position: absolute; left: 96px; top: 62px; font: 600 19px var(--body); letter-spacing: 3.5px; text-transform: uppercase; color: var(--dust); }
+  .label b { font: 700 20px var(--mono); color: var(--amber); margin-right: 16px; letter-spacing: 1px; }
+  .h2 { position: absolute; left: 96px; top: 100px; font: 600 56px/1.1 var(--body); letter-spacing: -.6px; }
+  .sub { font: 400 27px/1.4 var(--body); color: var(--dust); }
+  .panel { position: absolute; background: var(--r1); border: 1px solid var(--r2); border-radius: 14px; }
+  .tagk { font: 600 15px var(--body); letter-spacing: 2.5px; text-transform: uppercase; color: var(--dust); }
+  .chip { display: inline-block; padding: 12px 24px; border: 1px solid var(--r3); border-radius: 999px; font: 500 25px var(--body);
+          background: var(--r1); margin: 0 10px 12px 0; color: var(--chalk); }
+  .chip.c { border-color: #2f6f74; color: var(--cyan); }
+  #draft { position: absolute; right: 28px; top: 24px; z-index: 70; font: 600 14px var(--body); letter-spacing: 2px; text-transform: uppercase;
+           color: var(--amber); border: 1px solid rgba(242, 179, 91, .5); border-radius: 999px; padding: 6px 14px; background: rgba(20, 18, 28, .7); display: none; }
+  #progress { position: absolute; left: 0; bottom: 0; height: 6px; background: var(--amber); width: 0; z-index: 60; }
+  .wipe { position: absolute; inset: 0; z-index: 55; pointer-events: none; visibility: hidden; }
+  .wipe i { position: absolute; width: 116px; height: 116px; border-radius: 10px; transform: scale(0); }
+
+  /* S1 cold open */
+  .qline { position: absolute; left: 96px; top: 88px; width: 1728px; height: 96px; display: flex; align-items: center; gap: 22px;
+           background: var(--r1); border: 1px solid var(--r2); border-radius: 14px; padding: 0 30px; font: 500 29px var(--body); }
+  .qline .tagk { flex: none; }
+  .colh { position: absolute; font: 600 40px var(--body); letter-spacing: -.3px; }
+  .colh small { display: block; font: 400 24px var(--body); color: var(--dust); margin-top: 6px; letter-spacing: 0; }
+  .prow { position: absolute; left: 96px; width: 860px; height: 58px; display: flex; align-items: center; }
+  .prow .n { width: 410px; white-space: nowrap; font: 500 24px var(--mono); color: var(--chalk); }
+  .prow .tr { width: 300px; height: 14px; background: var(--r2); border-radius: 7px; overflow: hidden; }
+  .prow .tr i { display: block; height: 100%; width: 0; background: var(--dim); border-radius: 7px; }
+  .prow.top .tr i { background: var(--cyan); }
+  .prow .v { margin-left: 18px; font: 500 24px var(--mono); color: var(--dust); }
+  .prow.top .v { color: var(--cyan); }
+  .qchips span { display: inline-block; font: 500 22px var(--mono); padding: 8px 14px; margin: 0 10px 10px 0; border-radius: 8px; background: var(--r2); color: var(--chalk); }
+  .qchips span b { color: var(--ember); font-weight: 700; }
+  #typer { position: absolute; left: 1008px; top: 330px; width: 816px; height: 336px; padding: 26px 30px; font: 500 25px/1.6 var(--mono);
+           white-space: pre-wrap; word-break: normal; overflow-wrap: anywhere; color: var(--chalk); }
+  #typer span { border-radius: 4px; padding: 1px 0; }
+  #typer span:nth-child(odd) { background: rgba(242, 179, 91, .10); }
+  #typer span.sp { color: var(--dust); }
+  #typer .caret { display: inline-block; width: 13px; height: 28px; background: var(--amber); vertical-align: -5px; margin-left: 2px; }
+  .stat { position: absolute; font: 700 64px/1 var(--body); letter-spacing: -1px; }
+  .stat small { font: 500 24px var(--body); color: var(--dust); margin-left: 14px; letter-spacing: 0; }
+  .say { position: absolute; font: 500 31px var(--body); }
+
+  /* S2 title */
+  #ttl { position: absolute; left: 0; width: 1920px; top: 300px; text-align: center; font: 700 200px/1 var(--display); letter-spacing: 2px; white-space: nowrap; }
+  #ttl .ch { position: relative; display: inline-block; }
+  #ttl .ch .m { position: absolute; left: 4%; right: 4%; top: 8%; bottom: 6%; background: var(--r2); border: 3px solid var(--r3); border-radius: 10px; }
+  #ttl .ver { color: var(--dust); }
+
+  /* S3 mechanism */
+  .inp { font: 500 18px/1.6 var(--mono); color: var(--chalk); }
+  .inp > div { margin-bottom: 4px; }
+  .sp-t { display: inline-block; font: 700 16px var(--mono); color: var(--amber); background: rgba(242, 179, 91, .12); border: 1px solid rgba(242, 179, 91, .35);
+          border-radius: 5px; padding: 0 7px; margin-right: 10px; line-height: 26px; vertical-align: 2px; }
+  .qspan { border-radius: 5px; padding: 0 2px; }
+  .enc { position: absolute; border-radius: 16px; background: linear-gradient(180deg, #2a2540, #1f1b2c); border: 1px solid var(--r3); overflow: hidden; }
+  .enc .lines i { position: absolute; left: -40%; width: 40%; height: 2px; background: linear-gradient(90deg, rgba(242,179,91,0), rgba(242,179,91,.9), rgba(242,179,91,0)); }
+  .crow { display: flex; align-items: center; height: 46px; font: 500 21px var(--mono); }
+  .crow .k { width: 118px; color: var(--amber); font-weight: 700; font-size: 17px; }
+  .crow .n { width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 12px; }
+  .crow .tr { width: 150px; height: 12px; background: var(--r2); border-radius: 6px; overflow: hidden; }
+  .crow .tr i { display: block; height: 100%; width: 0; background: var(--cyan); }
+  .crow.none .n, .crow.none .v { color: var(--dim); } .crow.none .tr i { background: var(--r4); }
+  .crow .v { margin-left: 14px; color: var(--cyan); }
+  .lens span { display: inline-block; font: 500 19px var(--mono); padding: 6px 12px; margin: 0 8px 8px 0; border-radius: 7px; background: var(--r2); color: var(--chalk); }
+  .lens span b { color: var(--amber); font-weight: 500; margin-left: 8px; }
+  #block { position: absolute; left: 96px; top: 654px; width: 1728px; display: flex; flex-wrap: wrap; align-items: center; row-gap: 34px;
+           font: 500 24px var(--mono); color: var(--dust); }
+  #block .txt { white-space: pre; margin: 0 2px; }
+  #block .args { font: 700 16px var(--mono); color: var(--amber); background: rgba(242, 179, 91, .12); border: 1px solid rgba(242, 179, 91, .35);
+                 border-radius: 5px; padding: 3px 8px; margin-right: 12px; }
+  .tk { display: inline-flex; align-items: center; justify-content: center; min-width: 50px; height: 50px; padding: 0 9px; margin: 0 3px;
+        border-radius: 7px; font: 500 22px var(--mono); background: var(--r2); border: 1px solid var(--r3); color: #7d7690; position: relative; }
+  .tk.mask { color: #6f6884; font-size: 17px; }
+  .tk[data-c]::after { content: attr(data-c); position: absolute; left: 0; right: 0; top: 54px; text-align: center; font: 500 14px var(--mono); color: var(--dust); }
+  .tk.low[data-c]::after { color: var(--amber); }
+  .tk.copy { background: rgba(98, 227, 234, .12); border-color: rgba(98, 227, 234, .7); color: var(--cyan); }
+  .tk.gen { background: #2d2939; border-color: var(--r4); color: var(--chalk); }
+  .tk.low { background: rgba(242, 179, 91, .12); border-color: rgba(242, 179, 91, .7); color: var(--amber); }
+  .tk.pad { background: transparent; border-style: dashed; border-color: var(--r3); color: #4f4960; font-size: 15px; }
+  .tk.pick { background: rgba(98, 227, 234, .12); border-color: rgba(98, 227, 234, .7); color: var(--cyan); }
+  .opt { display: inline-flex; align-items: center; height: 42px; margin: 0 4px; padding: 0 12px 0 6px; border-radius: 7px; border: 1px solid var(--r3); color: var(--dust); font-size: 21px; }
+  .opt::before { content: "OPT"; font: 700 12px var(--mono); color: var(--amber); margin-right: 8px; padding: 1px 5px; border: 1px solid rgba(242,179,91,.4); border-radius: 4px; }
+  .opt.on { border-color: rgba(98, 227, 234, .8); color: var(--cyan); background: rgba(98, 227, 234, .1); }
+  .opt.off { opacity: .4; }
+  #passline { position: absolute; left: 96px; top: 868px; width: 1180px; font: 500 28px/1.4 var(--body); }
+  #passline b { font: 700 22px var(--mono); color: var(--amber); margin-right: 14px; letter-spacing: 1px; }
+  #callout { position: absolute; left: 96px; top: 930px; width: 1728px; font: 500 27px/1.5 var(--mono); color: var(--chalk); }
+  #callout .s { color: var(--cyan); }
+  #callmeta { position: absolute; right: 96px; top: 866px; text-align: right; font: 500 24px var(--body); color: var(--dust); white-space: nowrap; }
+  #callmeta b { font: 700 32px var(--body); color: var(--cyan); letter-spacing: -.3px; margin-right: 10px; }
+
+  /* S4 cards */
+  .card { position: absolute; top: 236px; width: 404px; height: 640px; background: var(--r1); border: 1px solid var(--r2); border-radius: 16px; padding: 30px 30px; }
+  .card h3 { font: 600 40px var(--body); letter-spacing: -.4px; }
+  .card .vis { height: 250px; margin: 24px 0 18px; display: flex; flex-direction: column; justify-content: center; gap: 12px; font: 500 21px var(--mono); }
+  .card p { font: 400 24px/1.4 var(--body); color: var(--dust); }
+  .card .big { position: absolute; left: 30px; right: 30px; bottom: 28px; font: 500 22px var(--body); color: var(--dust); border-top: 1px solid var(--r2); padding-top: 18px; }
+  .card .big b { display: block; font: 700 36px var(--mono); color: var(--cyan); margin-bottom: 4px; }
+  .card .vis .tk { height: 44px; min-width: 44px; font-size: 20px; }
+
+  /* S5 journey */
+  #chart { position: absolute; left: 96px; top: 210px; }
+  .what { position: absolute; width: 330px; font: 400 22px/1.35 var(--body); color: var(--dust); text-align: center; }
+  .what b { display: block; font: 600 28px var(--body); color: var(--chalk); margin-bottom: 6px; }
+
+  /* S6 failures */
+  .frow { position: absolute; left: 96px; width: 1728px; height: 140px; border-top: 1px solid var(--r2); display: flex; align-items: center; }
+  .frow .w { width: 900px; font: 600 38px var(--body); letter-spacing: -.3px; }
+  .frow .w small { display: block; font: 400 23px var(--body); color: var(--dust); margin-top: 6px; letter-spacing: 0; }
+  .frow .r { width: 380px; font: 500 38px var(--mono); color: var(--ember); }
+  .frow .vv { width: 448px; font: 500 25px var(--body); color: var(--dust); }
+  .frow .x { position: absolute; left: -44px; width: 22px; height: 22px; }
+
+  /* S7 gap */
+  .grow { position: absolute; left: 96px; width: 1000px; }
+  .grow .l { font: 600 30px var(--body); margin-bottom: 14px; }
+  .grow .l i { font-style: normal; font: 700 18px var(--body); letter-spacing: 2px; text-transform: uppercase; margin-left: 14px; padding: 4px 10px; border-radius: 6px; vertical-align: 4px; }
+  .grow .l i.tie { color: var(--cyan); background: rgba(98, 227, 234, .1); }
+  .grow .l i.gap { color: var(--ember); background: rgba(232, 99, 79, .12); }
+  .bar2 { display: flex; align-items: center; height: 40px; margin-bottom: 8px; }
+  .bar2 .who { width: 210px; font: 500 21px var(--body); color: var(--dust); }
+  .bar2 .tr { width: 620px; height: 26px; background: var(--r2); border-radius: 5px; overflow: hidden; }
+  .bar2 .tr i { display: block; height: 100%; width: 0; border-radius: 5px; }
+  .bar2 .v { margin-left: 16px; font: 700 26px var(--mono); }
+  .ecard { position: absolute; left: 1200px; width: 624px; background: var(--r1); border: 1px solid var(--r2); border-radius: 14px; padding: 24px 28px; }
+  .ecard .k { font: 600 15px var(--body); letter-spacing: 2.5px; text-transform: uppercase; color: var(--amber); }
+  .ecard .q { font: 400 23px/1.4 var(--body); color: var(--chalk); margin: 10px 0 14px; }
+  .ecard .p { font: 500 22px/1.6 var(--mono); color: var(--dust); }
+  .ecard .p b { font-weight: 700; }
+
+  /* S8 benchmarks */
+  table.bf { position: absolute; left: 96px; top: 250px; width: 1010px; border-collapse: collapse; font: 500 23px var(--body); }
+  table.bf th { font: 600 15px var(--body); letter-spacing: 2.5px; text-transform: uppercase; color: var(--dust); text-align: right; padding: 0 0 14px; }
+  table.bf th:first-child, table.bf td:first-child { text-align: left; }
+  table.bf td { height: 70px; border-top: 1px solid var(--r2); text-align: right; font: 500 27px var(--mono); color: var(--chalk); vertical-align: middle; }
+  table.bf td:first-child { font: 600 24px var(--body); }
+  table.bf td.sz { font: 500 20px var(--mono); color: var(--dust); }
+  table.bf td small { display: block; font: 500 14px var(--mono); color: var(--dim); margin-top: 2px; }
+  table.bf tr.ours td { color: var(--cyan); }
+  table.bf td.na { color: var(--dim); }
+  .lrow { position: absolute; left: 1200px; width: 624px; }
+  .lrow .l { font: 600 24px var(--body); } .lrow .l small { font: 400 19px var(--body); color: var(--dust); margin-left: 8px; }
+  .lrow .bb { display: flex; align-items: center; margin-top: 10px; }
+  .lrow .tr { width: 440px; height: 24px; background: var(--r2); border-radius: 5px; overflow: hidden; }
+  .lrow .tr i { display: block; height: 100%; width: 0; background: var(--amber); }
+  .lrow.ours .tr i { background: var(--cyan); }
+  .lrow .v { margin-left: 16px; font: 700 26px var(--mono); color: var(--chalk); }
+  .pend { display: inline-block; font: 600 16px var(--body); letter-spacing: 2.5px; text-transform: uppercase; color: var(--amber);
+          border: 1px solid rgba(242, 179, 91, .5); border-radius: 999px; padding: 6px 14px; vertical-align: 14px; margin-left: 20px; }
+
+  /* S9 arena intro */
+  .mchip { position: absolute; width: 520px; height: 180px; background: var(--r1); border: 1px solid var(--r2); border-radius: 16px; padding: 28px 32px; }
+  .mchip h4 { font: 600 34px var(--body); }
+  .mchip p { font: 400 21px var(--body); color: var(--dust); margin-top: 4px; }
+  .mchip .ms { position: absolute; right: 32px; top: 26px; font: 700 52px/1 var(--body); letter-spacing: -1px; text-align: right; }
+  .mchip .ms small { display: block; font: 500 16px var(--body); color: var(--dust); letter-spacing: 2px; text-transform: uppercase; margin-top: 8px; }
+
+  /* races */
+  .ev-title { position: absolute; left: 96px; top: 92px; font: 600 72px/1 var(--body); letter-spacing: -1.5px; }
+  .ev-line { position: absolute; left: 96px; top: 176px; font: 400 27px var(--body); color: var(--dust); }
+  .ev-chips { position: absolute; left: 96px; top: 222px; display: flex; gap: 10px; }
+  .ev-chips span { font: 500 18px var(--mono); padding: 5px 12px; border-radius: 7px; background: var(--r2); color: var(--chalk); }
+  .ev-chips span s { color: var(--dust); text-decoration-color: var(--ember); }
+  .ev-chips span.lv { background: rgba(242, 179, 91, .12); color: var(--amber); font-family: var(--body); font-weight: 600; }
+  .ev-clock { position: absolute; right: 96px; top: 76px; text-align: right; }
+  .ev-clock b { display: block; font: 700 64px/1 var(--mono); letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+  .ev-clock span { font: 500 19px var(--body); color: var(--dust); letter-spacing: 1px; }
+  .ev-clock span i { font-style: normal; color: var(--amber); font-family: var(--mono); }
+  .lane { position: absolute; top: 268px; }
+  .lane .hd { height: 52px; display: flex; justify-content: space-between; align-items: baseline; }
+  .lane .hd h4 { font: 600 30px var(--body); }
+  .lane .hd span { font: 500 20px var(--body); color: var(--dust); }
+  .lane .hd span b { font: 700 24px var(--mono); color: var(--amber); margin-left: 6px; }
+  .lane .stg { position: relative; height: 380px; border-radius: 10px; overflow: hidden; background: #0c0a12; border: 1px solid var(--r2); display: flex; justify-content: center; }
+  .lane canvas { image-rendering: pixelated; height: 380px; display: block; }
+  .lane .stamp { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(16, 13, 24, .45); opacity: 0; }
+  .lane .stamp b { font: 700 54px/1 var(--display); letter-spacing: 2px; text-shadow: 0 4px 0 rgba(0,0,0,.5); }
+  .lane .stamp span { font: 600 28px var(--body); margin-top: 10px; }
+  .lane .rank { position: absolute; left: 12px; top: 12px; font: 700 20px var(--body); background: var(--cyan); color: #0d2a2c; padding: 3px 12px; border-radius: 6px; opacity: 0; }
+  .lane .obs { margin-top: 12px; font: 400 21px var(--body); color: var(--dust); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; height: 28px; }
+  .lane .cl { margin-top: 4px; font: 500 22px var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; height: 30px; }
+  .lane .cl.th { color: var(--amber); } .lane .cl.bad { color: var(--ember); }
+  .lane .tb { height: 4px; background: var(--r2); border-radius: 2px; margin-top: 6px; overflow: hidden; } .lane .tb i { display: block; height: 100%; width: 0; background: var(--amber); }
+  .strip { position: absolute; left: 96px; top: 830px; }
+  .legend { position: absolute; left: 96px; top: 1010px; font: 400 19px var(--body); color: var(--dust); }
+  .legend i { font-style: normal; color: var(--amber); } .legend em { font-style: normal; color: var(--cyan); } .legend u { text-decoration: none; color: var(--ember); }
+  .ph { position: absolute; left: 96px; top: 268px; width: 1728px; height: 700px; border: 2px dashed var(--r3); border-radius: 18px; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; text-align: center; gap: 18px; }
+  .ph b { font: 700 46px var(--display); color: var(--dust); }
+  .ph p { font: 400 25px/1.5 var(--body); color: var(--dust); max-width: 1000px; }
+  .ph code { font: 500 22px var(--mono); color: var(--chalk); }
+  .fb { position: absolute; right: 96px; top: 188px; font: 600 15px var(--body); letter-spacing: 2px; text-transform: uppercase; color: var(--amber); }
+
+  /* S13 limits */
+  .lim { position: absolute; left: 96px; width: 1000px; }
+  .lim h4 { font: 600 36px var(--body); letter-spacing: -.3px; }
+  .lim p { font: 400 25px/1.4 var(--body); color: var(--dust); margin-top: 6px; }
+  .nx { position: absolute; left: 1220px; width: 604px; font: 500 30px/1.3 var(--body); padding-left: 34px; }
+  .nx::before { content: ""; position: absolute; left: 0; top: 12px; width: 14px; height: 14px; background: var(--cyan); transform: rotate(45deg); }
+
+  /* end */
+  #endt { position: absolute; left: 0; width: 1920px; top: 330px; text-align: center; font: 700 150px/1 var(--display); letter-spacing: 2px; }
+  #ends { position: absolute; left: 0; width: 1920px; top: 506px; text-align: center; font: 400 46px var(--body); color: var(--dust); }
+  #endl { position: absolute; left: 0; width: 1920px; top: 650px; display: flex; justify-content: center; gap: 70px; font: 500 26px var(--mono); }
+  #endl span b { font: 600 17px var(--body); letter-spacing: 2.5px; text-transform: uppercase; color: var(--dust); margin-right: 14px; }
+  #endc { position: absolute; left: 0; width: 1920px; top: 900px; text-align: center; font: 400 25px var(--body); color: var(--dust); }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- S1 cold open: choose vs act -->
+  <div class="scene" id="s1">
+    <div class="qline" id="s1q"><span class="tagk">request</span><span id="s1qt"></span></div>
+    <div class="colh" id="s1lh" style="left:96px; top:236px">A decision model<small>reads once and scores every option</small></div>
+    <div class="colh" id="s1rh" style="left:1008px; top:236px">A language model<small>writes the call one token at a time</small></div>
+    <div id="s1bars"></div>
+    <div class="qchips abs" id="s1args" style="left:96px; top:590px; width:800px"></div>
+    <div class="stat cy" id="s1ls" style="left:96px; top:770px"><span id="s1lsv">1 pass</span><small id="s1lsm"></small></div>
+    <div class="say" id="s1lt" style="left:96px; top:870px">It can only <span class="em">choose</span>.</div>
+    <div class="panel" style="left:1008px; top:330px; width:816px; height:336px"></div>
+    <div id="typer"></div>
+    <div class="stat am" id="s1rs" style="left:1008px; top:770px"><span id="s1rsv">token 0</span><small>one forward pass per token</small></div>
+    <div class="say" id="s1rt" style="left:1008px; top:870px">It can <span class="cy">act</span>, one step at a time.</div>
+    <div class="abs" id="s1x" style="left:0; width:1920px; top:430px; text-align:center; font:600 84px/1.15 var(--body); letter-spacing:-1.5px; opacity:0">
+      What if the one-shot model<br>could also <span class="cy">act</span>?</div>
+  </div>
+
+  <!-- S2 title -->
+  <div class="scene" id="s2">
+    <svg id="s2gem" class="abs" style="left:912px; top:170px; image-rendering:pixelated" width="96" height="96" viewBox="0 0 8 8"><g fill="#1f8f99"><rect x="2" y="1" width="4" height="1"/><rect x="1" y="2" width="6" height="2"/><rect x="2" y="4" width="4" height="1"/><rect x="3" y="5" width="2" height="1"/></g><g fill="#62e3ea"><rect x="2" y="2" width="3" height="1"/><rect x="2" y="3" width="2" height="1"/><rect x="3" y="4" width="2" height="1"/></g><rect x="2" y="2" width="1" height="1" fill="#e9feff"/></svg>
+    <div id="ttl"></div>
+    <div class="abs" id="s2s" style="left:0; width:1920px; top:560px; text-align:center; font:400 48px var(--body); color:var(--dust)">an encoder that <span class="cy">acts</span></div>
+    <div class="abs" id="s2c" style="left:0; width:1920px; top:690px; text-align:center"></div>
+  </div>
+
+  <!-- S3 mechanism -->
+  <div class="scene" id="s3">
+    <div class="label"><b>01</b>how it works</div>
+    <div class="h2" id="s3h">Read once to pick the tool. Fill every argument at once.</div>
+    <div class="panel" id="s3in" style="left:96px; top:208px; width:780px; height:390px; padding:22px 26px"><div class="tagk" style="margin-bottom:10px">input</div><div class="inp" id="s3inp"></div></div>
+    <div class="enc" id="s3enc" style="left:916px; top:208px; width:250px; height:390px">
+      <div class="lines" id="s3lines"></div>
+      <div class="abs" style="left:0; width:250px; top:118px; text-align:center">
+        <div style="font:600 32px var(--body); letter-spacing:-.3px">encoder</div>
+        <div class="mono" style="font-size:19px; color:var(--dust); margin-top:14px; line-height:1.6" id="s3encs"></div>
+      </div>
+    </div>
+    <div class="panel" id="s3dec" style="left:1206px; top:208px; width:618px; height:390px; padding:22px 26px">
+      <div class="tagk" style="margin-bottom:6px">decision head: each [CALL] picks a tool or none</div>
+      <div id="s3calls"></div>
+      <div class="tagk" style="margin:14px 0 10px">length head: slots per argument</div>
+      <div class="lens" id="s3lens"></div>
+    </div>
+    <div class="tagk abs" id="s3bl" style="left:96px; top:618px">slot block, appended after the input, every slot filled in parallel</div>
+    <div id="block"></div>
+    <div id="passline"></div>
+    <div id="callmeta"></div>
+    <div id="callout"></div>
+  </div>
+
+  <!-- S4 four tricks -->
+  <div class="scene" id="s4">
+    <div class="label"><b>02</b>pick or copy, never spell</div>
+    <div class="h2">Most arguments are already in the request.</div>
+    <div id="cards"></div>
+  </div>
+
+  <!-- S5 journey -->
+  <div class="scene" id="s5">
+    <div class="label"><b>03</b>three nights of runs</div>
+    <div class="h2" id="s5h"></div>
+    <svg id="chart" width="1728" height="560"></svg>
+    <div id="whats"></div>
+  </div>
+
+  <!-- S6 failures -->
+  <div class="scene" id="s6">
+    <div class="label"><b>04</b>what did not work</div>
+    <div class="h2">Four ideas that didn't move it.</div>
+    <div id="frows"></div>
+    <div class="sub abs" id="s6n" style="left:96px; top:920px; width:1728px"></div>
+  </div>
+
+  <!-- S7 the gap -->
+  <div class="scene" id="s7">
+    <div class="label"><b>05</b>against an LLM, same data</div>
+    <div class="h2">The gap is in the argument values.</div>
+    <div id="grows"></div>
+    <div id="ecards"></div>
+    <div class="abs" id="s7c" style="left:96px; top:930px; width:1728px; font:500 30px var(--body)"></div>
+  </div>
+
+  <!-- S8 benchmarks -->
+  <div class="scene" id="s8">
+    <div class="label"><b>06</b>proper benchmarks</div>
+    <div class="h2" id="s8h">BFCL v4 and a tuned LLM server.</div>
+    <table class="bf" id="bfcl"></table>
+    <div class="tagk abs" style="left:1200px; top:250px" id="s8lt"></div>
+    <div id="lrows"></div>
+    <div class="abs" id="s8cpu" style="left:1200px; top:820px; width:624px; font:400 23px/1.4 var(--body); color:var(--dust)"></div>
+    <div class="abs" id="s8f" style="left:96px; top:990px; width:1728px; font:400 18px var(--body); color:var(--dim)"></div>
+  </div>
+
+  <!-- S9 arena intro -->
+  <div class="scene" id="s9">
+    <div class="abs px" id="s9t" style="left:0; width:1920px; top:170px; text-align:center; font-size:150px; font-weight:700; letter-spacing:2px">The Arena</div>
+    <div class="abs" id="s9s" style="left:310px; width:1300px; top:370px; text-align:center; font:400 34px/1.45 var(--body); color:var(--dust)">
+      Same situation for every model. One tool call, on <span style="color:var(--chalk)">renamed controls</span>.<br>The world keeps moving while a model <span class="am">thinks</span>.</div>
+    <div id="mchips"></div>
+  </div>
+
+  <div class="scene" id="s10"></div>
+  <div class="scene" id="s11"></div>
+  <div class="scene" id="s12"></div>
+
+  <!-- S13 limits and next -->
+  <div class="scene" id="s13">
+    <div class="label"><b>07</b>limits, and what's next</div>
+    <div class="h2">What it can't do yet.</div>
+    <div id="lims"></div>
+    <div class="tagk abs" style="left:1220px; top:236px">next</div>
+    <div id="nxs"></div>
+  </div>
+
+  <!-- S14 end -->
+  <div class="scene" id="s14">
+    <svg class="abs" style="left:924px; top:200px; image-rendering:pixelated" width="72" height="72" viewBox="0 0 8 8"><g fill="#1f8f99"><rect x="2" y="1" width="4" height="1"/><rect x="1" y="2" width="6" height="2"/><rect x="2" y="4" width="4" height="1"/><rect x="3" y="5" width="2" height="1"/></g><g fill="#62e3ea"><rect x="2" y="2" width="3" height="1"/><rect x="2" y="3" width="2" height="1"/><rect x="3" y="4" width="2" height="1"/></g><rect x="2" y="2" width="1" height="1" fill="#e9feff"/></svg>
+    <div id="endt"></div>
+    <div id="ends"></div>
+    <div id="endl"></div>
+    <div id="endc"></div>
+  </div>
+
+  <div id="wipes"></div>
+  <div class="grain"></div>
+  <div id="draft"></div>
+  <div id="progress"></div>
+</div>
+
+<script src="gsap.min.js"></script>
+<script src="data.js"></script>
+<script>
+// The arena renderers expect this namespace (same as arena/viewer/index.html).
+window.ARENA = {
+  games: {}, RM: false,
+  rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; },
+  frameIdx(r, t) { const f = r.frames; let lo = 0, hi = f.length - 1;
+    while (lo < hi) { const m = (lo + hi + 1) >> 1; if (f[m].t <= t) lo = m; else hi = m - 1; } return lo; },
+};
+</script>
+<!-- the real arena: replays + renderers straight from arena/viewer (missing files just leave a placeholder) -->
+<script src="../arena/viewer/replays.js"></script>
+<script src="../arena/viewer/games/mining.js"></script>
+<script src="../arena/viewer/games/rally.js"></script>
+<script src="../arena/viewer/games/cycling.js"></script>
+<script>
+"use strict";
+const D = window.FILM || {};
+const TR = (D.trace && D.trace.examples) || {};
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const nf = (v, d = 1) => v === null || v === undefined ? "--" : Number(v).toFixed(d);
+const el = (tag, cls, html, parent, style) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html !== undefined) e.innerHTML = html;
+  if (style) e.style.cssText = style; if (parent) parent.appendChild(e); return e; };
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const tl = gsap.timeline({ paused: true });
+const DYN = [];                                           // per-frame renderers: f(t), pure functions of film time
+const CUES = { type: [], snap: [], pops: [], copy: [], race: [], finish: [], wipes: [], thud: [], bars: [] };
+
+// ---------------------------------------------------------------- scene times (seconds)
+const T = { s1: [0, 11], s2: [11, 17], s3: [17, 39], s4: [39, 47], s5: [47, 57], s6: [57, 65], s7: [65, 73], s8: [73, 83],
+            s9: [83, 87], s10: [87, 96], s11: [96, 105], s12: [105, 114], s13: [114, 121], s14: [121, 128] };
+const DURATION = 128;
+function show(id, t0, t1) {
+  tl.fromTo("#" + id, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.4, ease: "power2.out" }, t0);
+  if (t1 < DURATION) tl.to("#" + id, { autoAlpha: 0, duration: 0.35, ease: "power2.in" }, t1 - 0.35);
+}
+for (const k in T) show(k, T[k][0], T[k][1]);
+const rise = (sel, t, o = {}) => tl.fromTo(sel, { autoAlpha: 0, y: o.y ?? 22 }, { autoAlpha: 1, y: 0, duration: o.d ?? 0.5, ease: o.ease ?? "power2.out", stagger: o.st ?? 0 }, t);
+
+if (D._status === "draft" && (D.film || {}).draft_badge) { $("draft").style.display = "block"; $("draft").textContent = "draft · numbers pending"; }
+
+// ---------------------------------------------------------------- example + helpers
+const EX = TR[(D.cold_open || {}).example_id] || Object.values(TR)[0];
+function toolParams(t) {
+  if (t.params) return t.params.map(p => p[0]);
+  const s = t.sig, a = s.indexOf("("); let depth = 0, q = false, cur = "", out = [];
+  for (let i = a + 1; i < s.length; i++) { const c = s[i];
+    if (c === '"') q = !q;
+    if (!q && c === "(") depth++;
+    if (!q && c === ")") { if (!depth) { out.push(cur); break; } depth--; }
+    if (!q && !depth && c === ",") { out.push(cur); cur = ""; continue; }
+    cur += c; }
+  return out.map(x => x.trim().split(/[?:= ]/)[0]).filter(Boolean);
+}
+function finalCall(ex, ci = 0) {
+  const call = ex.calls[ci]; if (!call) return "";
+  const parts = [];
+  call.params.forEach((p, k) => {
+    if (p.mode === "absent") return;
+    let v;
+    if (p.mode === "option") { const o = ex.options.find(o => o.call === call.slot && o.param === p.name); v = o ? o.options[o.p.indexOf(Math.max(...o.p))] : "?"; }
+    else { const idx = ex.slot_index.map((s, i) => [s, i]).filter(([s]) => s[0] === call.slot && s[1] === k).map(([, i]) => ex.values[i]);
+      v = p.mode === "list" ? "[" + idx.map(x => '"' + x + '"').join(", ") + "]" : idx[0]; }
+    const quote = p.mode !== "list" && !/^(int|float|bool|number)$/.test(p.type) && !(p.mode === "option" && /^(true|false)$/.test(v));
+    parts.push(`${esc(p.name)}=<span class="s">${esc(quote ? '"' + v + '"' : v)}</span>`);
+  });
+  return `${esc(call.tool)}(${parts.join(", ")})`;
+}
+const tokTxt = s => s.replace(/Ġ/g, " ").replace(/Ċ/g, "\n");
+
+// ================================================================ S1 cold open
+(() => {
+  const t0 = T.s1[0];
+  if (!EX) return;
+  $("s1qt").textContent = EX.query;
+  const names = EX.tools.map(t => t.name).concat(["no call"]);
+  const p = EX.call_slots[0], best = p.indexOf(Math.max(...p));
+  const bars = $("s1bars");
+  names.forEach((n, i) => {
+    const r = el("div", "prow" + (i === best ? " top" : ""), `<span class="n">${esc(n)}</span><span class="tr"><i></i></span><span class="v">${p[i].toFixed(2)}</span>`, bars);
+    r.style.top = (340 + i * 58) + "px";
+    tl.fromTo(r.querySelector("i"), { width: 0 }, { width: Math.max(4, p[i] * 330), duration: 0.28, ease: "power3.out" }, t0 + 1.5);
+  });
+  rise("#s1bars .prow", t0 + 0.9, { d: 0.35, st: 0.06, y: 10 });
+  CUES.snap.push(t0 + 1.5);
+  const tool = EX.tools[best] || EX.tools[0];
+  $("s1args").innerHTML = `<div class="tagk" style="margin-bottom:12px">${esc(tool.name)}: and the arguments?</div>` + toolParams(tool).map(n => `<span>${esc(n)} = <b>?</b></span>`).join("");
+  rise("#s1args", t0 + 2.6);
+  $("s1lsm").textContent = `~${(D.cold_open || {}).decision_ms_approx} ms`;
+  rise("#s1ls", t0 + 1.9); rise("#s1lt", t0 + 3.2);
+  rise(["#s1q"], t0 + 0.2); rise(["#s1lh", "#s1rh"], t0 + 0.6, { st: 0.15 });
+  // the LLM typewriter: the Qwen baseline's real output tokens for this request, one per step
+  const toks = EX.qwen_tokens || [], typer = $("typer"), a = t0 + 1.4, b = t0 + 7.6, rate = toks.length / (b - a);
+  toks.forEach((_, i) => CUES.type.push(a + i / rate));
+  let memo = -1;
+  DYN.push(t => {
+    const n = clamp(Math.floor((t - a) * rate) + 1, 0, toks.length);
+    if (n === memo) return; memo = n;
+    typer.innerHTML = toks.slice(0, n).map(s => `<span class="${/^<\|/.test(s) ? "sp" : ""}">${esc(s)}</span>`).join("") + (n < toks.length ? '<i class="caret"></i>' : "");
+    $("s1rsv").textContent = n < toks.length ? `token ${n}` : `${toks.length} steps`;
+  });
+  rise("#s1rs", t0 + 1.4); rise("#s1rt", t0 + 7.9);
+  tl.to(["#s1q", "#s1lh", "#s1rh", "#s1bars", "#s1args", "#s1ls", "#s1lt", "#s1rs", "#s1rt", "#typer", "#s1 .panel"], { autoAlpha: 0, y: -24, duration: 0.45, ease: "power2.in", stagger: 0.02 }, t0 + 9.0);
+  tl.fromTo("#s1x", { opacity: 0, scale: 0.95 }, { opacity: 1, scale: 1, duration: 0.6, ease: "back.out(1.6)" }, t0 + 9.5);
+})();
+
+// ================================================================ S2 title: letters unmask in two passes
+(() => {
+  const t0 = T.s2[0], ttl = $("ttl"), name = (D.film || {}).title || "ActionMan-0.1";
+  const cut = name.indexOf("-"), main = cut > 0 ? name.slice(0, cut) : name, ver = cut > 0 ? name.slice(cut) : "";
+  const chars = [];
+  [...main].forEach(c => chars.push(el("span", "ch", `<span class="c">${esc(c)}</span><span class="m"></span>`, ttl)));
+  if (ver) { const v = el("span", "ver", "", ttl); [...ver].forEach(c => chars.push(el("span", "ch", `<span class="c">${esc(c)}</span><span class="m"></span>`, v))); }
+  const rng = window.ARENA.rng(5), order = chars.map((c, i) => [rng(), i]).sort((x, y) => x[0] - y[0]).map(x => x[1]);
+  const half = Math.ceil(chars.length * 0.6);
+  chars.forEach(c => tl.set(c.querySelector(".c"), { opacity: 0 }, 0));
+  tl.fromTo(chars.map(c => c.querySelector(".m")), { scale: 0.4, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.25, stagger: 0.03, ease: "back.out(2)" }, t0 + 0.15);
+  order.forEach((i, k) => {
+    const at = k < half ? t0 + 1.0 + k * 0.04 : t0 + 1.85 + (k - half) * 0.05;
+    tl.to(chars[i].querySelector(".m"), { opacity: 0, scale: 0.8, duration: 0.18 }, at);
+    tl.fromTo(chars[i].querySelector(".c"), { opacity: 0 }, { opacity: 1, duration: 0.18 }, at);
+  });
+  CUES.pops.push([t0 + 1.0, 0], [t0 + 1.85, 1]);
+  tl.fromTo("#s2gem", { autoAlpha: 0, y: 20, scale: 0.6 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(2)" }, t0 + 2.3);
+  rise("#s2s", t0 + 2.5);
+  const tc = D.title_chips || {};
+  $("s2c").innerHTML = [`${tc.params_m}M-parameter encoder`, `${tc.passes} parallel passes`, "no JSON generated", `about $${tc.cost_usd_approx} of rented GPUs`]
+    .map((s, i) => `<span class="chip${i === 2 ? " c" : ""}">${esc(s)}</span>`).join("");
+  tl.fromTo("#s2c .chip", { autoAlpha: 0, y: 20, scale: 0.92 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.35, stagger: 0.16, ease: "back.out(2)" }, t0 + 3.1);
+  for (let i = 0; i < 4; i++) CUES.pops.push([t0 + 3.1 + i * 0.16, 2 + i]);
+})();
+
+// ================================================================ S3 mechanism: the real trace of one request
+(() => {
+  const t0 = T.s3[0], ex = TR[(D.mechanism || D.cold_open || {}).example_id] || EX;
+  if (!ex) return;
+  const M = D.model || {};
+  $("s3encs").innerHTML = `${esc(M.encoder || "")}<br>${M.params_m}M · ${M.layers} layers`;
+  // input panel with query spans that will be copied
+  const q = ex.query, cps = ex.copies.filter(c => c.copy).sort((x, y) => x.char_start - y.char_start);
+  let qh = "", at = 0;
+  cps.forEach(c => { qh += esc(q.slice(at, c.char_start)) + `<span class="qspan" id="qs${c.value}">${esc(q.slice(c.char_start, c.char_end))}</span>`; at = c.char_end; });
+  qh += esc(q.slice(at));
+  $("s3inp").innerHTML = ex.tools.map(t => `<div><span class="sp-t">T</span>${esc(t.name)}(${toolParams(t).map(esc).join(", ")})</div>`).join("") +
+    `<div style="margin-top:8px; line-height:1.5"><span class="sp-t">USER</span>${qh}</div>` +
+    `<div style="margin-top:10px">${'<span class="sp-t">CALL</span>'.repeat(4)}</div>`;
+  rise("#s3h", t0 + 0.2);
+  rise("#s3in", t0 + 0.6); rise("#s3inp > div", t0 + 0.9, { st: 0.18, y: 10, d: 0.35 });
+  rise("#s3enc", t0 + 1.0); rise("#s3dec", t0 + 1.2);
+  // light sweeping through the encoder: one read
+  const lines = $("s3lines");
+  for (let i = 0; i < 14; i++) {
+    const l = el("i", "", undefined, lines); l.style.top = (20 + i * 26) + "px";
+    tl.fromTo(l, { left: "-40%" }, { left: "110%", duration: 0.7, ease: "power1.inOut" }, t0 + 2.4 + (i % 5) * 0.06);
+  }
+  CUES.bars.push(t0 + 2.4);
+  // decision head: every [CALL] slot scores every [T] marker + none, all at once
+  const names = ex.tools.map(t => t.name).concat(["none"]);
+  const calls = $("s3calls");
+  ex.call_slots.forEach((p, i) => {
+    const j = p.indexOf(Math.max(...p)), none = j === names.length - 1;
+    const r = el("div", "crow" + (none ? " none" : ""), `<span class="k">CALL ${i + 1}</span><span class="n"${names[j].length > 24 ? ' style="font-size:16px"' : ""}>${esc(names[j])}</span><span class="tr"><i></i></span><span class="v">${p[j].toFixed(2)}</span>`, calls);
+    tl.fromTo(r, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.2 }, t0 + 3.2);
+    tl.fromTo(r.querySelector("i"), { width: 0 }, { width: p[j] * 150, duration: 0.3, ease: "power3.out" }, t0 + 3.2);
+  });
+  CUES.snap.push(t0 + 3.2);
+  const lens = $("s3lens");
+  ex.calls.forEach(c => c.params.forEach(p => {
+    if (p.mode === "absent") return;
+    const lab = p.mode === "option" ? "pick" : p.mode === "list" ? `${p.items} items` : "≤" + p.bucket_slots;
+    el("span", "", `${esc(p.name)}<b>${esc(lab)}</b>`, lens);
+  }));
+  tl.fromTo("#s3lens span", { autoAlpha: 0, scale: 0.8 }, { autoAlpha: 1, scale: 1, duration: 0.25, stagger: 0.12, ease: "back.out(2)" }, t0 + 4.0);
+  // the slot block, built from the real pass-B tokens
+  const blk = $("block"), bt = ex.block_tokens, slotOf = {}, tiles = [];
+  ex.slot_pos_rel.forEach((pos, v) => pos.forEach((p, j) => { slotOf[p] = tiles.length; tiles.push({ v, j, pos: p }); }));
+  const optAnchor = {}; ex.opt_slots_rel.forEach((o, n) => { optAnchor[o.anchor] = n; });
+  const optChips = ex.opt_slots_rel.map(() => []);
+  let run = "", inOpt = null;
+  const flush = () => { if (run) { el("span", "txt", esc(run), blk); run = ""; } };
+  const items = [];
+  for (let i = 0; i < bt.length; i++) {
+    const s = bt[i];
+    if (s === "[SEP]") continue;
+    if (s === "[ARGS]") { el("span", "args", "ARGS", blk); continue; }
+    if (s === "[OPT]") { flush(); const n = ex.opt_slots_rel.findIndex(o => o.opts.includes(i)); inOpt = el("span", "opt", "", blk); optChips[n].push(inOpt); items.push(inOpt); continue; }
+    if (inOpt && s !== "Ġ)" && s !== ")") { inOpt.textContent += tokTxt(s).trim() ? (inOpt.textContent ? tokTxt(s) : tokTxt(s).trim()) : ""; continue; }
+    inOpt = null;
+    if (slotOf[i] !== undefined) { flush(); const e = el("span", "tk mask", "M", blk); tiles[slotOf[i]].el = e; items.push(e); continue; }
+    if (optAnchor[i] !== undefined) { flush(); const e = el("span", "tk mask", "M", blk); optAnchor[i] = { n: optAnchor[i], el: e }; items.push(e); continue; }
+    run += tokTxt(s);
+  }
+  flush();
+  rise("#s3bl", t0 + 4.8, { y: 8 });
+  tl.fromTo("#block > *", { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.2, stagger: 1.2 / blk.children.length }, t0 + 5.0);
+  CUES.pops.push([t0 + 5.0, 0]);
+  // passes
+  const tau = ex.tau || 0.85, P0 = t0 + 7.5, PASS = 4.0;
+  const passLine = $("passline");
+  const copiesAt = P0 + 0.3, genAt = P0 + 1.6;
+  const copyByV = {}; ex.copies.forEach(c => { if (c.copy) copyByV[c.value] = c; });
+  const nP = ex.passes.length;
+  const events = [];                                       // [time, tileIndex, state]
+  ex.passes.forEach((ps, k) => {
+    const base = P0 + k * PASS;
+    ps.tokens.forEach((tok, s) => {
+      const tile = tiles[s]; if (!tile) return;
+      const isCopy = ps.fixed[s] && k === 0, upd = ps.updated[s];
+      if (!isCopy && !upd) return;
+      const order = Object.keys(copyByV).map(Number).indexOf(tile.v);
+      const when = isCopy ? copiesAt + Math.max(0, order) * 0.45 + tile.j * 0.05 : (k ? base : genAt) + 0.04 * s;
+      const pad = tok === "[PAD]";
+      const st = isCopy ? (pad ? "pad" : "copy") : pad ? "pad" : ps.conf[s] < tau ? "low" : "gen";
+      events.push([when, s, st, pad ? "pad" : tokTxt(tok).trim() || "·", ps.conf[s]]);
+      if (ps.remasked && ps.remasked[s]) events.push([base + PASS - 0.5, s, "mask", "M", 0]);
+    });
+  });
+  Object.values(copyByV).forEach((c, i) => CUES.copy.push(copiesAt + i * 0.45));
+  CUES.pops.push([genAt, 3]);
+  events.sort((x, y) => x[0] - y[0]);
+  const optAt = P0 + 1.1 + (Object.keys(copyByV).length ? 0.6 : 0);
+  if (ex.options.length) CUES.pops.push([optAt, 4]);
+  const optByIdx = ex.opt_slots_rel.map((o, n) => ex.options[n]);
+  const doneAt = P0 + (nP - 1) * PASS + 3.0;
+  const nCopy = Object.keys(copyByV).length, nOpt = ex.options.length, nGen = ex.slot_pos_rel.length - nCopy;
+  const pass1 = [nCopy ? `Copy ${nCopy} value${nCopy > 1 ? "s" : ""} from the request` : "", nOpt ? `pick ${nOpt} option${nOpt > 1 ? "s" : ""}` : "", nGen ? `write ${nGen}` : ""].filter(Boolean).join(", ").replace(/^./, c => c.toUpperCase()) + ".";
+  DYN.push(t => {
+    const st = tiles.map(() => ["mask", "M", -9, 0]);
+    for (const e of events) { if (e[0] > t) break; st[e[1]] = [e[2], e[3], e[0], e[4]]; }
+    tiles.forEach((tile, s) => {
+      if (!tile.el) return;
+      const [cls, txt, when] = st[s], key = cls + "|" + txt;
+      if (tile.memo !== key) { tile.memo = key; tile.el.className = "tk " + cls; tile.el.textContent = txt;
+        if (cls === "gen" || cls === "low") tile.el.dataset.c = st[s][3].toFixed(2); else delete tile.el.dataset.c; }
+      const k = clamp((t - when) / 0.25, 0, 1);
+      tile.el.style.transform = k < 1 ? `scale(${1 + 0.18 * (1 - k)})` : "";
+    });
+    // query spans light up while being copied
+    Object.values(copyByV).forEach((c, i) => {
+      const e = $("qs" + c.value); if (!e) return;
+      const on = t >= copiesAt + i * 0.45 - 0.15;
+      const want = on ? "rgba(98,227,234,.18)" : "transparent";
+      if (e.style.background !== want) { e.style.background = want; e.style.color = on ? "#62e3ea" : ""; e.style.boxShadow = on ? "0 0 0 1px rgba(98,227,234,.6)" : ""; }
+    });
+    // option slots: the anchor picks one [OPT] marker
+    Object.values(optAnchor).forEach(a => {
+      const o = optByIdx[a.n]; if (!o || !a.el) return;
+      const m = o.p.indexOf(Math.max(...o.p)), on = t >= optAt, key = on ? "on" : "off";
+      if (a.memo === key) return; a.memo = key;
+      a.el.className = "tk " + (on ? "pick" : "mask"); a.el.textContent = on ? o.options[m] : "M";
+      optChips[a.n].forEach((c, i) => { c.className = "opt" + (on ? (i === m ? " on" : " off") : ""); });
+    });
+    // narration line for the current pass
+    let line;
+    if (t < P0) line = `<b>PASS A</b>The encoder read the input once: tool chosen, slots sized.`;
+    else if (t < doneAt) {
+      const k = clamp(Math.floor((t - P0) / PASS), 0, nP - 1), lows = ex.passes[k].conf.filter((c, s) => ex.passes[k].updated[s] && c < tau).length;
+      line = k === 0 ? `<b>PASS 1</b>${pass1}` :
+        `<b>PASS ${k + 1}</b>Only the unsure slots are masked again and rewritten.`;
+      if (lows && k === 0) line += ` <span class="am">${lows} slot${lows > 1 ? "s" : ""} below ${tau}.</span>`;
+    } else line = nP === 1 ? `<b>DONE</b>Every slot was at least ${tau} sure after pass 1, so it stopped early.` : `<b>DONE</b>All slots at least ${tau} sure.`;
+    if (passLine.memo !== line) { passLine.memo = line; passLine.innerHTML = line; }
+  });
+  $("callout").innerHTML = finalCall(ex);
+  tl.fromTo("#callout", { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: 0.5 }, doneAt + 0.2);
+  $("callmeta").innerHTML = `<b>${ex.forward_passes} forward passes</b>for this request · 0 JSON tokens written`;
+  rise("#callmeta", doneAt + 0.6);
+  rise("#passline", P0 - 2.0, { y: 8 });
+  CUES.bars.push(doneAt + 0.2);
+})();
+
+// ================================================================ S4 copy / pick / lists / markers
+(() => {
+  const t0 = T.s4[0], V = D.v3_parts || {}, cards = $("cards");
+  const ex1 = TR[(D.cold_open || {}).example_id] || EX, exL = Object.values(TR).find(e => e.calls.some(c => c.params.some(p => p.mode === "list"))),
+        exP = Object.values(TR).find(e => e.calls.length > 1);
+  const tiles = (arr, cls) => arr.map(s => `<span class="tk ${cls}">${esc(s)}</span>`).join("");
+  const C = [];
+  if (ex1) {
+    const c = ex1.copies.find(c => c.copy);
+    const q = ex1.query, a = Math.max(0, c.char_start - 24), b = Math.min(q.length, c.char_end + 18);
+    C.push({ h: "Copy", vis: `<div style="font:400 22px/1.5 var(--body); color:var(--dust)">…${esc(q.slice(a, c.char_start))}<span style="color:var(--cyan); background:rgba(98,227,234,.15); border-radius:4px; padding:0 3px">${esc(c.text)}</span>${esc(q.slice(c.char_end, b))}…</div>
+        <div style="color:var(--dim); font-size:26px; padding-left:12px">↓</div><div>${tiles([c.text], "copy")}${tiles(["pad", "pad"], "pad")}</div>`,
+      p: "Each value has a copy switch. On copy, a pointer picks a span of the request, so names can't be misspelled.",
+      big: `<b>${V.garbled_v2} → ${V.garbled_v3}</b>garbled values` });
+    const o = ex1.options[0];
+    if (o) { const m = o.p.indexOf(Math.max(...o.p));
+      C.push({ h: "Pick", vis: `<div style="color:var(--dust)">${esc(o.param)} =</div><div style="display:flex; flex-wrap:wrap; gap:8px">${o.options.map((x, i) => `<span class="opt ${i === m ? "on" : "off"}" style="margin:0">${esc(x)}</span>`).join("")}</div>
+          <div style="color:var(--cyan)">p = ${o.p[m].toFixed(2)}</div>`,
+        p: "Booleans and enums are not spelled. The slot points at one of the [OPT] markers written into the block.",
+        big: `<b>≤${V.max_options}</b>options per slot` }); }
+  }
+  if (exL) {
+    const call = exL.calls.find(c => c.params.some(p => p.mode === "list")), k = call.params.findIndex(p => p.mode === "list"), p = call.params[k];
+    const vals = exL.slot_index.map((s, i) => [s, i]).filter(([s]) => s[0] === call.slot && s[1] === k).map(([, i]) => exL.values[i]);
+    C.push({ h: "Lists", vis: `<div style="color:var(--dust)">${esc(p.name)} = <span class="am">${p.items} items</span></div><div>[ ${vals.map(v => tiles([v], "copy")).join(" | ")} ]</div>
+        <div style="color:var(--dim); font-size:18px">${V.item_slots} slots per item, up to ${V.max_list_items} items</div>`,
+      p: "A count head sizes the list. Each item gets its own slots and its own copy switch.",
+      big: `<b>${V.list_format_v2} → ${V.list_format_v3}</b>list-format errors` });
+  }
+  if (exP) {
+    const rows = exP.calls.map((c, ci) => {
+      const vals = exP.slot_index.map((s, i) => [s, i]).filter(([s]) => s[0] === c.slot).map(([, i]) => exP.values[i]);
+      return `<div style="white-space:nowrap"><span class="am">#${ci + 1}</span> ${esc(c.tool)}</div><div style="padding-left:34px">${tiles(vals, "copy")}</div>`;
+    }).join("");
+    C.push({ h: "Markers", vis: rows, p: "Repeated calls to one tool get numbered blocks, so the second call stops copying the first.",
+      big: `<b>${nf(V.markers_parallel_from)} → ${nf(V.markers_parallel_to)}</b>BFCL parallel` });
+  }
+  C.forEach((c, i) => {
+    const d = el("div", "card", `<h3>${c.h}</h3><div class="vis">${c.vis}</div><p>${c.p}</p><div class="big">${c.big}</div>`, cards);
+    d.style.left = (96 + i * (404 + 37)) + "px";
+    tl.fromTo(d, { autoAlpha: 0, y: 50 }, { autoAlpha: 1, y: 0, duration: 0.5, ease: "back.out(1.4)" }, t0 + 0.6 + i * 0.5);
+    CUES.pops.push([t0 + 0.6 + i * 0.5, i]);
+  });
+})();
+
+// ================================================================ S5 the journey chart
+(() => {
+  const t0 = T.s5[0], J = D.journey || {}, S = J.steps || [], svg = $("chart"), NS = "http://www.w3.org/2000/svg";
+  if (!S.length) return;
+  $("s5h").innerHTML = `${nf(S[0].acc)} → <span class="cy">${nf(S[S.length - 1].acc)}</span> on the same ${J.eval_n.toLocaleString("en-US")} prompts.`;
+  const W = 1728, H = 560, y0 = 68, y1 = 90, Y = v => 30 + (y1 - v) / (y1 - y0) * (H - 80), X = i => 180 + i * ((W - 560) / (S.length - 1));
+  const mk = (tag, a, parent = svg) => { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); parent.appendChild(e); return e; };
+  for (let v = 70; v <= 90; v += 5) {
+    mk("line", { x1: 120, x2: W, y1: Y(v), y2: Y(v), stroke: "#282435", "stroke-width": 1 });
+    const t = mk("text", { x: 100, y: Y(v) + 7, fill: "#6a6379", "font-family": "JetBrains Mono", "font-size": 20, "text-anchor": "end" }); t.textContent = v + "%";
+  }
+  // the LLM line
+  const ly = Y(J.llm_acc);
+  const ll = mk("line", { x1: 120, x2: W, y1: ly, y2: ly, stroke: "#9a92a6", "stroke-width": 2, "stroke-dasharray": "12 10" });
+  const lt = mk("text", { x: W, y: ly - 16, fill: "#9a92a6", "font-family": "Instrument Sans", "font-size": 24, "text-anchor": "end" });
+  lt.textContent = `${J.llm_label}: ${nf(J.llm_acc)}`;
+  tl.fromTo([ll, lt], { opacity: 0 }, { opacity: 1, duration: 0.6 }, t0 + 0.6);
+  // seed noise band at the v3 step
+  const iv3 = S.findIndex(s => s.key === "v3");
+  if (iv3 >= 0 && J.v3_seed_range) {
+    const r = J.v3_seed_range, band = mk("rect", { x: X(iv3) - 26, y: Y(r[1]), width: 52, height: Y(r[0]) - Y(r[1]), rx: 6, fill: "rgba(242,179,91,.22)", stroke: "rgba(242,179,91,.6)" });
+    const bt = mk("text", { x: X(iv3) + 40, y: Y(r[0]) + 30, fill: "#f2b35b", "font-family": "Instrument Sans", "font-size": 21 });
+    bt.textContent = `3 seeds: ${nf(r[0])}-${nf(r[1])} (noise ~${J.seed_noise_pts} pts)`;
+    tl.fromTo([band, bt], { opacity: 0 }, { opacity: 1, duration: 0.5 }, t0 + 4.2);
+  }
+  const d = S.map((s, i) => `${i ? "L" : "M"}${X(i)} ${Y(s.acc)}`).join(" ");
+  const path = mk("path", { d, fill: "none", stroke: "#62e3ea", "stroke-width": 4, pathLength: 1, "stroke-dasharray": 1, "stroke-dashoffset": 1, "stroke-linejoin": "round" });
+  tl.to(path, { attr: { "stroke-dashoffset": 0 }, duration: 0.6 * (S.length - 1), ease: "none" }, t0 + 1.2);
+  const whats = $("whats");
+  S.forEach((s, i) => {
+    const at = t0 + 1.2 + i * 0.6;
+    const c = mk("circle", { cx: X(i), cy: Y(s.acc), r: 11, fill: "#14121c", stroke: "#62e3ea", "stroke-width": 4 });
+    const v = mk("text", { x: X(i), y: Y(s.acc) - 26, fill: "#ece6da", "font-family": "Instrument Sans", "font-weight": 700, "font-size": 40, "text-anchor": "middle" });
+    v.textContent = nf(s.acc);
+    tl.fromTo([c, v], { opacity: 0 }, { opacity: 1, duration: 0.25 }, at);
+    const w = el("div", "what", `<b>${esc(s.label)}</b>${esc(s.what)}`, whats);
+    w.style.left = (96 + X(i) - 165) + "px"; w.style.top = "790px";
+    tl.fromTo(w, { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: 0.4 }, at + 0.1);
+    CUES.pops.push([at, i]);
+  });
+  // the remaining gap
+  const last = S[S.length - 1], gx = X(S.length - 1) + 70;
+  const ga = mk("line", { x1: gx, x2: gx, y1: Y(last.acc) - 6, y2: ly + 8, stroke: "#e8634f", "stroke-width": 3 });
+  const gt = mk("text", { x: gx + 16, y: (Y(last.acc) + ly) / 2 + 9, fill: "#e8634f", "font-family": "JetBrains Mono", "font-weight": 700, "font-size": 28 });
+  gt.textContent = `${(last.acc - J.llm_acc).toFixed(1)} pts`;
+  tl.fromTo([ga, gt], { opacity: 0 }, { opacity: 1, duration: 0.4 }, t0 + 5.6);
+  CUES.thud.push(t0 + 5.6);
+  const foot = el("div", "abs", `Full-call accuracy: tool and every argument right. ${J.eval_n.toLocaleString("en-US")} held-out prompts (xLAM test + BFCL non-live), same scorer for every run.`, $("s5"),
+    "left:96px; top:990px; width:1728px; font:400 19px var(--body); color:var(--dim)");
+  rise(foot, t0 + 1.0, { y: 0 });
+})();
+
+// ================================================================ S6 failures
+(() => {
+  const t0 = T.s6[0], F = (D.failures || {}).items || [], box = $("frows");
+  F.forEach((f, i) => {
+    const r = el("div", "frow", `<svg class="x" viewBox="0 0 10 10"><path d="M1 1 L9 9 M9 1 L1 9" stroke="#e8634f" stroke-width="2.2" stroke-linecap="round"/></svg>
+      <div class="w">${esc(f.what)}<small>${esc(f.detail)}</small></div><div class="r">${esc(f.result)}</div><div class="vv">${esc(f.verdict)}</div>`, box);
+    r.style.top = (250 + i * 150) + "px";
+    tl.fromTo(r, { autoAlpha: 0, x: -30 }, { autoAlpha: 1, x: 0, duration: 0.4, ease: "power2.out" }, t0 + 0.7 + i * 0.6);
+    CUES.thud.push(t0 + 0.7 + i * 0.6);
+  });
+  const J = D.journey || {};
+  $("s6n").innerHTML = `Seed noise alone moves a run by about <span class="am">${J.seed_noise_pts} points</span>. Only results outside that band count.`;
+  rise("#s6n", t0 + 3.6);
+})();
+
+// ================================================================ S7 the gap
+(() => {
+  const t0 = T.s7[0], G = D.gap || {}, box = $("grows");
+  (G.rows || []).forEach((r, i) => {
+    const g = el("div", "grow", `<div class="l">${esc(r.label)}<i class="${r.verdict}">${r.verdict === "gap" ? "gap " + (r.am - r.llm).toFixed(1) : "tie"}</i></div>
+      <div class="bar2"><span class="who">ActionMan</span><span class="tr"><i style="background:var(--cyan)"></i></span><span class="v cy">${nf(r.am)}</span></div>
+      <div class="bar2"><span class="who">Qwen3-0.6B SFT</span><span class="tr"><i style="background:var(--r4)"></i></span><span class="v du">${nf(r.llm)}</span></div>`, box);
+    g.style.top = (236 + i * 220) + "px";
+    const at = t0 + 0.6 + i * 0.9;
+    tl.fromTo(g, { autoAlpha: 0, y: 20 }, { autoAlpha: 1, y: 0, duration: 0.4 }, at);
+    const bars = g.querySelectorAll(".tr i");
+    tl.fromTo(bars[0], { width: 0 }, { width: r.am / 100 * 620, duration: 0.7, ease: "power3.out" }, at + 0.15);
+    tl.fromTo(bars[1], { width: 0 }, { width: r.llm / 100 * 620, duration: 0.7, ease: "power3.out" }, at + 0.25);
+    CUES.pops.push([at + 0.15, i]);
+  });
+  const ec = $("ecards");
+  el("div", "tagk abs", "two real misses", ec, "left:1200px; top:236px");
+  (G.errors || []).forEach((e, i) => {
+    const c = el("div", "ecard", `<div class="k">${esc(e.kind)}</div><div class="q">${esc(e.query)}</div>
+      <div class="p">${esc(e.param)}: model <b class="em">${esc(e.pred)}</b> &nbsp;label <b style="color:var(--chalk)">${esc(e.gold)}</b></div>`, ec);
+    c.style.top = (280 + i * 250) + "px";
+    tl.fromTo(c, { autoAlpha: 0, x: 30 }, { autoAlpha: 1, x: 0, duration: 0.45 }, t0 + 3.6 + i * 0.6);
+  });
+  $("s7c").innerHTML = `Tool choice and "don't call" match the LLM. The ${(G.rows || [])[2] ? ((G.rows[2].llm - G.rows[2].am).toFixed(1)) : "--"}-point gap is values that need reasoning.` +
+    `<div style="font:400 24px var(--body); color:var(--dust); margin-top:10px">All of the research so far: about <span class="am">$${Math.round(G.cost_usd)}</span> of rented GPUs${G.benchmark_cost_usd ? `, plus $${nf(G.benchmark_cost_usd, 2)} for the benchmarks` : ""}.</div>`;
+  rise("#s7c", t0 + 5.2);
+})();
+
+// ================================================================ S8 benchmarks (data-driven, "--" until the numbers exist)
+(() => {
+  const t0 = T.s8[0], B = D.bfcl || {}, L = D.latency || {};
+  const pending = B._status === "pending" || L._status === "pending";
+  if (pending) $("s8h").innerHTML += `<span class="pend">running tonight</span>`;
+  const tb = $("bfcl");
+  tb.innerHTML = `<tr><th>BFCL v4, official harness</th><th>size</th>${(B.columns || []).map(c => `<th>${esc(c)}</th>`).join("")}</tr>` +
+    (B.rows || []).map(r => `<tr class="${r.ours ? "ours" : ""}"><td>${esc(r.model)}</td><td class="sz">${esc(r.params)}</td>${r.harness.map((v, i) =>
+      `<td class="${v === null ? "na" : ""}">${nf(v, 1)}${r.leaderboard && r.leaderboard[i] !== null && r.leaderboard[i] !== undefined ? `<small>board ${nf(r.leaderboard[i], 1)}</small>` : ""}</td>`).join("")}</tr>`).join("");
+  tl.fromTo("#bfcl tr", { autoAlpha: 0, x: -20 }, { autoAlpha: 1, x: 0, duration: 0.3, stagger: 0.12 }, t0 + 0.6);
+  $("s8lt").textContent = `p50 latency, batch 1, ${L.gpu || ""}`;
+  rise("#s8lt", t0 + 1.4);
+  const rows = L.rows || [], mx = Math.max(1, ...rows.map(r => r.p50_ms || 0));
+  rows.forEach((r, i) => {
+    const d = el("div", "lrow" + (r.ours ? " ours" : ""), `<div class="l">${esc(r.label)}<small>${esc(r.engine)}${r.acc != null ? " · " + nf(r.acc, 0) + "% correct" : ""}</small></div>
+      <div class="bb"><span class="tr"><i></i></span><span class="v">${r.p50_ms === null ? "--" : nf(r.p50_ms, r.p50_ms < 100 ? 1 : 0) + " ms"}</span></div>`, $("lrows"));
+    d.style.top = (300 + i * 120) + "px";
+    tl.fromTo(d, { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: 0.35 }, t0 + 1.6 + i * 0.3);
+    if (r.p50_ms !== null) tl.fromTo(d.querySelector("i"), { width: 0 }, { width: Math.max(4, r.p50_ms / mx * 440), duration: 0.7, ease: "power3.out" }, t0 + 1.8 + i * 0.3);
+  });
+  const C = L.cpu || {};
+  $("s8cpu").innerHTML = `<span class="em" style="font-weight:600">CPU:</span> ActionMan takes ${esc(C.actionman_s || "--")} s per call on a ${esc(C.label || "CPU")}` +
+    (C.llama_cpp_qwen_s ? `, Qwen3-0.6B on llama.cpp ${esc(C.llama_cpp_qwen_s)} s.` : ". The llama.cpp comparison is pending.");
+  rise("#s8cpu", t0 + 3.0);
+  $("s8f").textContent = "Harness numbers come from one bfcl-eval run on one box. \"board\" = the public leaderboard, shown only as a cross-check. Latency: end to end, the same 500 prompts for every model; \"correct\" is official-checker accuracy on those 500.";
+  rise("#s8f", t0 + 3.4, { y: 0 });
+})();
+
+// ================================================================ arena data
+const A = window.ARENA, AR = D.arena || {}, REPS = window.ARENA_REPLAYS || [];
+const fmtMs = ms => ms >= 1000 ? (ms / 1000).toFixed(1) + " s" : Math.round(ms) + " ms";
+const fmtS = s => s >= 10 ? s.toFixed(1) + " s" : s.toFixed(2) + " s";
+const agentMatch = (r, a) => r.agent === a || r.agent.startsWith(a);
+function p50For(a) {
+  const xs = REPS.filter(r => agentMatch(r, a) && r.result).map(r => r.result.lat_ms_p50).sort((x, y) => x - y);
+  return xs.length ? xs[Math.floor(xs.length / 2)] : (AR.nominal_ms || {})[a];
+}
+const hasReplay = a => REPS.some(r => agentMatch(r, a));
+
+// ================================================================ S9 arena intro
+(() => {
+  const t0 = T.s9[0], box = $("mchips"), ag = AR.agents || [];
+  const cols = ["var(--cyan)", "var(--amber)", "var(--ember)"];
+  ag.forEach((a, i) => {
+    const ms = p50For(a);
+    const c = el("div", "mchip", `<h4>${esc((AR.names || {})[a] || a)}</h4><p>${esc((AR.where || {})[a] || "")}</p>
+      <div class="ms" style="color:${cols[i] || "var(--chalk)"}">${ms === undefined ? "--" : (hasReplay(a) ? "" : "~") + fmtMs(ms)}<small>${hasReplay(a) ? "per call, median" : "per call, estimate"}</small></div>`, box);
+    c.style.left = (96 + i * (520 + 84)) + "px"; c.style.top = "640px";
+    tl.fromTo(c, { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: 0.4, ease: "back.out(1.5)" }, t0 + 1.0 + i * 0.25);
+    CUES.pops.push([t0 + 1.0 + i * 0.25, i]);
+  });
+  tl.fromTo("#s9t", { autoAlpha: 0, scale: 0.9 }, { autoAlpha: 1, scale: 1, duration: 0.6, ease: "back.out(1.6)" }, t0 + 0.1);
+  rise("#s9s", t0 + 0.5);
+})();
+
+// ================================================================ S10-S12 races, drawn by the real arena renderers
+function ramp(tmax, P) {
+  // race seconds shown after u film seconds: starts at 1x, accelerates exponentially, reaches tmax at u = P
+  if (tmax <= P) return { T: u => clamp(u, 0, tmax), U: x => x, speed: () => 1 };
+  let lo = 1e-4, hi = 30;
+  for (let i = 0; i < 80; i++) { const k = (lo + hi) / 2; if (tmax * k / (P * (Math.exp(k) - 1)) > 1) lo = k; else hi = k; }
+  const k = lo, E = Math.exp(k) - 1;
+  return { T: u => tmax * (Math.exp(k * clamp(u, 0, P) / P) - 1) / E, U: x => P / k * Math.log(1 + x * E / tmax),
+           speed: u => tmax * k / (P * E) * Math.exp(k * clamp(u, 0, P) / P) };
+}
+function currentCall(r, t) { let cur = null; for (const c of r.calls) { if (c.t_obs > t) break; cur = c; } return cur; }
+
+(AR.picks || []).forEach((pick, ei) => {
+  const sid = "s" + (10 + ei); if (!T[sid]) return;
+  const t0 = T[sid][0], t1 = T[sid][1], sc = $(sid), G = A.games[pick.game];
+  el("div", "label", `<b>0${8}</b>the arena · ${ei + 1} of ${(AR.picks || []).length}`, sc);
+  const title = el("div", "ev-title", esc(pick.title || (G && G.title) || pick.game), sc);
+  const line = el("div", "ev-line", esc(pick.line || (G && G.tagline) || ""), sc);
+  rise([title, line], t0 + 0.15, { st: 0.12 });
+  if (!G) {
+    el("div", "ph", `<b>${esc(pick.title || pick.game)} renderer in progress</b><p>This scene draws the real race once <code>arena/viewer/games/${esc(pick.game)}.js</code> and its replays exist. Re-render the film then.</p>`, sc);
+    tl.fromTo(sc.querySelector(".ph"), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5 }, t0 + 0.5);
+    return;
+  }
+  const all = REPS.filter(r => r.game === pick.game && r.level === pick.level && r.seed === pick.seed);
+  let agents = (AR.agents || []).filter(a => all.some(r => agentMatch(r, a))), fallback = false;
+  if (!agents.length) { agents = (AR.fallback_agents || []).filter(a => all.some(r => agentMatch(r, a))); fallback = true; }
+  if (!agents.length) {
+    el("div", "ph", `<b>No ${esc(pick.game)} replay for L${pick.level} seed ${pick.seed}</b><p>Run the arena for this pick, rebuild <code>arena/viewer/replays.js</code>, then re-render.</p>`, sc);
+    tl.fromTo(sc.querySelector(".ph"), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5 }, t0 + 0.5);
+    return;
+  }
+  const missing = (AR.agents || []).filter(a => !agents.includes(a)).map(a => (AR.names || {})[a] || a);
+  if (fallback) el("div", "fb", "model replays pending: reference bots shown", sc);
+  else if (missing.length) el("div", "fb", "replay pending: " + missing.join(", "), sc);
+  const reps = agents.map(a => all.find(r => agentMatch(r, a)));
+  reps.forEach(r => { if (!r._film) { r.end = r.frames[r.frames.length - 1].t; r.endS = r.end / r.tps; G.prep(r); r._film = true; } });
+  // level + renamed controls
+  const chips = el("div", "ev-chips", "", sc), rn = reps[0].renames || { tools: {}, params: {}, values: {} };
+  const lv = (G.levels || [])[pick.level];
+  el("span", "lv", `L${pick.level}${lv ? " · " + esc(lv.name) : ""}`, chips);
+  const rc = [];
+  for (const [c, n] of Object.entries(rn.tools || {})) rc.push(`<s>${esc(c)}</s> → ${esc(n)}`);
+  for (const [c, n] of Object.entries(rn.params || {})) rc.push(`<s>${esc(c)}</s> → ${esc(n)}`);
+  for (const m of Object.values(rn.values || {})) for (const [c, n] of Object.entries(m)) rc.push(`<s>${esc(c)}</s> → ${esc(n)}`);
+  rc.slice(0, 6).forEach(h => el("span", "", h, chips));
+  rise(chips, t0 + 0.4, { y: 8 });
+  // clock
+  const clock = el("div", "ev-clock", `<b>0.00 s</b><span>race time · playback <i>1.0x</i></span>`, sc);
+  rise(clock, t0 + 0.4, { y: 0 });
+  // lanes
+  const n = reps.length, gap = 24, lw = (1728 - gap * (n - 1)) / n;
+  const [cw, ch] = G.size, sh = 380, sw = Math.min(lw, Math.round(cw * sh / ch));
+  const winners = reps.filter(r => r.result.outcome === "win").sort((a, b) => a.result.seconds - b.result.seconds);
+  const lanes = reps.map((r, i) => {
+    const name = (AR.names || {})[agents[i]] || r.label, where = (AR.where || {})[agents[i]] || "";
+    const d = el("div", "lane", `<div class="hd"><h4>${esc(name)}</h4><span>${esc(where)}<b>${fmtMs(r.result.lat_ms_p50)}</b> per call</span></div>
+      <div class="stg"><canvas width="${cw}" height="${ch}" style="width:${sw}px; height:${sh}px"></canvas><div class="rank"></div><div class="stamp"><b></b><span></span></div></div>
+      <div class="obs"></div><div class="cl"></div><div class="tb"><i></i></div>`, sc);
+    d.style.left = (96 + i * (lw + gap)) + "px"; d.style.width = lw + "px";
+    tl.fromTo(d, { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: 0.45 }, t0 + 0.5 + i * 0.12);
+    const place = winners.indexOf(r) + 1;
+    return { r, el: d, ctx: d.querySelector("canvas").getContext("2d"), memo: {}, place, obs: d.querySelector(".obs"), cl: d.querySelector(".cl"),
+             tb: d.querySelector(".tb i"), stamp: d.querySelector(".stamp"), rank: d.querySelector(".rank") };
+  });
+  // race strip
+  const strip = el("canvas", "strip", undefined, sc), SW = 1728, rowH = 46, SH = n * rowH + 30;
+  strip.width = SW; strip.height = SH; strip.style.top = (1000 - SH) + "px";
+  const sx = strip.getContext("2d");
+  el("div", "legend", `Each tick is one tool call, <em>valid</em> or <u>invalid</u>. <i>Amber</i> is time spent thinking while the race went on.`, sc);
+  rise([strip, sc.querySelector(".legend")], t0 + 0.8, { y: 0 });
+  const tmax = Math.min(150, Math.max(...reps.map(r => r.endS)));
+  const play0 = t0 + 1.2, P = (t1 - 0.9) - play0, R = ramp(tmax, P);
+  // cues for the sound: every landed call and every finish, in film time
+  lanes.forEach((L, li) => {
+    for (const c of L.r.calls) { const s = c.t_land / L.r.tps; if (s > tmax) break; CUES.race.push([play0 + R.U(s), li, c.ok ? 1 : 0]); }
+    CUES.finish.push([play0 + R.U(Math.min(L.r.endS, tmax)), L.r.result.outcome]);
+  });
+  function drawStrip(Tr) {
+    // the axis grows with the race, so the first second is readable and the slow finishers still fit at the end
+    const span = clamp(Tr * 1.15, Math.min(1, tmax), tmax);
+    const x = sx, labelW = 260, resW = 200, tw = SW - labelW - resW, X = s => labelW + Math.min(s, span) / span * tw;
+    x.clearRect(0, 0, SW, SH);
+    const step = [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 30, 60].find(s => span / s <= 8) || 120;
+    x.font = "500 16px 'JetBrains Mono', monospace"; x.fillStyle = "#4f4960";
+    for (let s = 0; s <= span + 1e-9; s += step) { const xx = X(s); x.fillRect(xx, 4, 1, SH - 30); x.fillText(+s.toFixed(1) + "s", xx + 4, SH - 8); }
+    lanes.forEach((L, i) => {
+      const r = L.r, mid = 4 + i * rowH + rowH / 2, Tt = Tr * r.tps;
+      x.font = "600 22px 'Instrument Sans', sans-serif"; x.fillStyle = "#ece6da"; x.fillText(L.el.querySelector("h4").textContent, 0, mid + 8);
+      x.fillStyle = "#2b2738"; x.fillRect(labelW, mid - 1, tw, 2);
+      for (const c of r.calls) {
+        if (c.t_obs > Tt) break;
+        const a = X(c.t_obs / r.tps), b = X(Math.min(c.t_land, Tt) / r.tps);
+        if (c.t_obs / r.tps > span) break;
+        if (b - a >= 0.6) { x.fillStyle = "rgba(242,179,91,.5)"; x.fillRect(a, mid - 8, b - a, 16); }
+        if (c.t_land <= Tt) { x.fillStyle = c.ok ? "#62e3ea" : "#e8634f"; x.fillRect(X(c.t_land / r.tps) - 1, mid - 12, 2, 24); }
+      }
+      let label, col = "#9a92a6";
+      if (Tt >= r.end) {
+        const o = r.result.outcome, ex = X(Math.min(r.endS, tmax));
+        col = o === "win" ? "#62e3ea" : o === "dead" ? "#e8634f" : "#f2b35b"; x.fillStyle = col;
+        if (o === "win") { x.beginPath(); x.moveTo(ex, mid - 11); x.lineTo(ex + 9, mid); x.lineTo(ex, mid + 11); x.lineTo(ex - 9, mid); x.fill(); }
+        else x.fillRect(ex - 2, mid - 11, 4, 22);
+        label = o === "win" ? `done ${fmtS(r.result.seconds)}` : o === "dead" ? `out ${fmtS(r.result.seconds)}` : "out of time";
+      } else { let k = 0; for (const c of r.calls) { if (c.t_land > Tt) break; k++; } label = `${k} call${k === 1 ? "" : "s"}`; }
+      x.font = "600 21px 'JetBrains Mono', monospace"; x.fillStyle = col; x.fillText(label, labelW + tw + 20, mid + 8);
+    });
+    x.fillStyle = "#ece6da"; x.fillRect(Math.round(X(Math.min(Tr, tmax))) - 1, 2, 2, SH - 28);
+  }
+  const words = G.words || { win: "DONE", dead: "OUT", timeout: "OUT OF TIME" };
+  DYN.push(t => {
+    if (t < t0 - 0.1 || t > t1 + 0.1) return;
+    const u = t - play0, Tr = R.T(u);
+    const cb = clock.querySelector("b"), sp = clock.querySelector("i");
+    cb.textContent = fmtS(Tr); sp.textContent = (u <= 0 ? 1 : R.speed(u)).toFixed(1) + "x";
+    lanes.forEach(L => {
+      const r = L.r, tt = Math.min(Tr * r.tps, r.end), cur = currentCall(r, tt);
+      G.draw(L, tt, t, cur);
+      const ended = Tr * r.tps >= r.end;
+      if (cur) {
+        const thinking = tt < cur.t_land;
+        const o = "sees: “" + cur.obs + "”"; if (L.memo.o !== o) { L.memo.o = o; L.obs.textContent = o; }
+        const c = thinking ? "thinking…" : cur.ok ? cur.call : cur.call + "  ✕ " + cur.err;
+        if (L.memo.c !== c) { L.memo.c = c; L.cl.textContent = c; L.cl.className = "cl" + (thinking ? " th" : cur.ok ? "" : " bad"); }
+        L.tb.style.width = (thinking ? 100 * (tt - cur.t_obs) / Math.max(1, cur.t_land - cur.t_obs) : 0).toFixed(1) + "%";
+      }
+      const sk = ended ? r.result.outcome : "";
+      if (L.memo.s !== sk) {
+        L.memo.s = sk; L.stamp.style.opacity = ended ? 1 : 0;
+        const o = r.result.outcome, col = o === "win" ? "var(--cyan)" : o === "dead" ? "var(--ember)" : "var(--amber)";
+        L.stamp.querySelector("b").textContent = ended ? words[o] || o : ""; L.stamp.querySelector("b").style.color = col;
+        L.stamp.querySelector("span").textContent = ended && o !== "timeout" ? (o === "win" ? "in " : "at ") + fmtS(r.result.seconds) : "";
+        L.rank.textContent = ended && L.place ? ["", "1st", "2nd", "3rd", "4th", "5th"][L.place] : ""; L.rank.style.opacity = ended && L.place ? 1 : 0;
+      }
+    });
+    drawStrip(Tr);
+  });
+});
+
+// ================================================================ S13 limits and next
+(() => {
+  const t0 = T.s13[0];
+  (D.limits || []).forEach((l, i) => {
+    const d = el("div", "lim", `<h4>${esc(l.head)}</h4><p>${esc(l.body)}</p>`, $("lims")); d.style.top = (236 + i * 160) + "px";
+    tl.fromTo(d, { autoAlpha: 0, x: -24 }, { autoAlpha: 1, x: 0, duration: 0.4 }, t0 + 0.5 + i * 0.45);
+  });
+  (D.next || []).forEach((s, i) => {
+    const d = el("div", "nx", esc(s), $("nxs")); d.style.top = (290 + i * 110) + "px";
+    tl.fromTo(d, { autoAlpha: 0, x: 24 }, { autoAlpha: 1, x: 0, duration: 0.4 }, t0 + 2.6 + i * 0.4);
+    CUES.pops.push([t0 + 2.6 + i * 0.4, i]);
+  });
+})();
+
+// ================================================================ S14 end card
+(() => {
+  const t0 = T.s14[0], E = D.end || {}, F = D.film || {};
+  $("endt").textContent = F.title || "ActionMan-0.1";
+  $("ends").innerHTML = esc(F.tagline || "").replace(/acts$/, '<span class="cy">acts</span>');
+  $("endl").innerHTML = `<span><b>GitHub</b>${esc(E.github || "--")}</span><span><b>Hugging Face</b>${esc(E.huggingface || "--")}</span>`;
+  $("endc").textContent = E.credit || "";
+  tl.fromTo("#endt", { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: 0.7, ease: "expo.out" }, t0 + 0.3);
+  rise("#ends", t0 + 0.9); rise("#endl", t0 + 1.5); rise("#endc", t0 + 2.1);
+  tl.fromTo("#s14 svg", { autoAlpha: 0, scale: 0.5 }, { autoAlpha: 1, scale: 1, duration: 0.5, ease: "back.out(2)" }, t0 + 0.1);
+})();
+
+// ================================================================ pixel-block wipes at chapter breaks
+[[T.s2[0], "#f2b35b"], [T.s5[0], "#282435"], [T.s8[0], "#282435"], [T.s9[0], "#62e3ea"], [T.s14[0], "#f2b35b"]].forEach(([b, col], w) => {
+  const box = el("div", "wipe", "", $("wipes")), rng = A.rng(31 + w), cells = [];
+  for (let y = 0; y < 9; y++) for (let x = 0; x < 16; x++) {
+    const c = el("i", "", undefined, box); c.style.left = (x * 120 + 2) + "px"; c.style.top = (y * 120 + 2) + "px"; c.style.background = col;
+    cells.push([c, rng() * 0.6 + (x / 16) * 0.4, rng() * 0.6 + (x / 16) * 0.4]);
+  }
+  tl.set(box, { autoAlpha: 1 }, b - 0.55);
+  cells.forEach(([c, d1, d2]) => {
+    tl.fromTo(c, { scale: 0 }, { scale: 1, duration: 0.16, ease: "power2.out", immediateRender: false }, b - 0.55 + d1 * 0.42);
+    tl.to(c, { scale: 0, duration: 0.16, ease: "power2.in" }, b + 0.05 + d2 * 0.42);
+  });
+  tl.set(box, { autoAlpha: 0 }, b + 0.7);
+  CUES.wipes.push(b);
+});
+
+// ---------------------------------------------------------------- progress + clock
+// film grain: one 256 px noise tile, generated once, light enough not to slow the frame capture
+(() => { const c = document.createElement("canvas"); c.width = c.height = 256; const x = c.getContext("2d"), im = x.createImageData(256, 256), r = A.rng(9);
+  for (let i = 0; i < im.data.length; i += 4) { const v = r() * 255; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 9; }
+  x.putImageData(im, 0, 0); document.querySelector(".grain").style.backgroundImage = `url(${c.toDataURL()})`; })();
+tl.fromTo("#progress", { width: 0 }, { width: 1920, duration: DURATION, ease: "none" }, 0);
+tl.to({}, { duration: 0.01 }, DURATION);
+function dyn(t) { for (const f of DYN) f(t); }
+window.DURATION = DURATION;
+window.CUES = { ...CUES, scenes: T, duration: DURATION };
+window.seek = t => { tl.seek(t, false); dyn(t); };
+tl.eventCallback("onUpdate", () => dyn(tl.time()));
+const fontsLoaded = Promise.all(['700 40px "Pixelify Sans"', '500 40px "Pixelify Sans"', '400 20px "Instrument Sans"', '600 20px "Instrument Sans"',
+  '700 20px "Instrument Sans"', '500 20px "JetBrains Mono"', '700 20px "JetBrains Mono"'].map(f => document.fonts.load(f).catch(() => {})));
+window.ready = fontsLoaded.then(() => document.fonts.ready).then(() => { dyn(0); });
+if (!location.search.includes("render")) window.ready.then(() => { const m = location.hash.match(/t=([\d.]+)/); tl.play(m ? +m[1] : 0); });
+</script>
+</body>
+</html>

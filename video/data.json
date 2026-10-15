@@ -1,0 +1,399 @@
+{
+  "_status": "final",
+  "_note": "Every number the film puts on screen lives here (plus trace.json for the mechanism scene and the arena replays for race times). null renders as \"--\". Edit, then run: python build_data_js.py",
+  "film": {
+    "title": "ActionMan-0.1",
+    "tagline": "an encoder that acts",
+    "draft_badge": false
+  },
+  "cold_open": {
+    "_source": "context.txt (the original idea), findings.md section 2 (~59 decode steps for the Qwen baseline)",
+    "example_id": "multiple_137",
+    "decision_label": "one pass",
+    "decision_ms_approx": 50,
+    "llm_steps_approx": 60
+  },
+  "title_chips": {
+    "params_m": 395,
+    "passes": "2-3",
+    "cost_usd_approx": 16
+  },
+  "model": {
+    "encoder": "ModernBERT-large",
+    "params_m": 395,
+    "layers": 28,
+    "tau": 0.85,
+    "max_passes": 3,
+    "avg_passes_v3": 2.17,
+    "max_calls": 4,
+    "buckets": [
+      "absent",
+      "<=4",
+      "<=8",
+      "<=16",
+      "<=32",
+      "overflow"
+    ]
+  },
+  "v3_parts": {
+    "_source": "findings.md section 1",
+    "garbled_v2": 77,
+    "garbled_v3": 13,
+    "list_format_v2": 74,
+    "list_format_v3": 35,
+    "copyable_strings_pct": "80-92",
+    "max_list_items": 7,
+    "item_slots": 8,
+    "max_options": 16,
+    "markers_parallel_from": 58.5,
+    "markers_parallel_to": 62.0,
+    "_markers_source": "findings.md section 2, ablation 7: markers alone (no hard negatives) took BFCL parallel 58.5 -> 62.0"
+  },
+  "mechanism": {
+    "_source": "trace.json (video/tools/trace_example.py): the real release-candidate model run on this BFCL item. multiple_12 is shown because it needs a second pass ($1.2M -> 1200000: one slot below 0.85 after pass 1)",
+    "example_id": "multiple_12"
+  },
+  "journey": {
+    "_source": "findings.md sections 0-2; full-call accuracy, T=3, own eval of 2,340 prompts (xLAM test + BFCL v3 non-live), our scorer",
+    "eval_n": 2340,
+    "steps": [
+      {
+        "key": "v1",
+        "label": "v1",
+        "acc": 71.2,
+        "date": "Oct 13",
+        "what": "encoder picks the tool, masked diffusion writes the arguments"
+      },
+      {
+        "key": "v2",
+        "label": "v2",
+        "acc": 75.9,
+        "date": "Oct 13",
+        "what": "call markers #1 #2, hard negatives, ToolACE + Hermes data"
+      },
+      {
+        "key": "v3",
+        "label": "v3",
+        "acc": 78.6,
+        "date": "Oct 14",
+        "what": "copy and pick instead of spell"
+      },
+      {
+        "key": "v3_5ep",
+        "label": "v3, 5 epochs",
+        "acc": 79.7,
+        "date": "Oct 15",
+        "what": "the only change outside seed noise"
+      }
+    ],
+    "seed_noise_pts": 1.5,
+    "v3_seed_range": [
+      77.5,
+      78.8
+    ],
+    "llm_label": "Qwen3-0.6B SFT, same data",
+    "llm_acc": 86.5
+  },
+  "failures": {
+    "_source": "findings.md sections 0-1; docs/arena/mining.md (observation styles)",
+    "items": [
+      {
+        "what": "Distillation from Qwen3-14B",
+        "detail": "relabelled 68,094 examples",
+        "result": "77.6 vs 78.6",
+        "verdict": "-1.0, inside noise"
+      },
+      {
+        "what": "More data: 145k rows",
+        "detail": "Synth-APIGen, Glaive, Toucan added",
+        "result": "78.7",
+        "verdict": "inside the seed range"
+      },
+      {
+        "what": "Word snap",
+        "detail": "widen copies to whole words",
+        "result": "-0.1 to -0.2",
+        "verdict": "worse on all 7 checkpoints"
+      },
+      {
+        "what": "Describing the state, not the move",
+        "detail": "mining arena: \"Stone blocks the way down\"",
+        "result": "1 of 12",
+        "verdict": "races won (10 of 12 from orders): it does not plan"
+      }
+    ]
+  },
+  "gap": {
+    "_source": "findings.md: ActionMan s16-v3-5epb (5 epochs) vs Qwen3-0.6B SFT on the same v2 data, same 2,340 prompts",
+    "rows": [
+      {
+        "label": "Tool choice",
+        "am": 95.1,
+        "llm": 95.5,
+        "verdict": "tie"
+      },
+      {
+        "label": "Don't call (BFCL irrelevance)",
+        "am": 80.8,
+        "llm": 80.0,
+        "verdict": "tie"
+      },
+      {
+        "label": "Full call: tool + every argument",
+        "am": 79.7,
+        "llm": 86.5,
+        "verdict": "gap"
+      }
+    ],
+    "_errors_source": "runs/hf/runs/s16-v3-5epb/m/eval_errors.jsonl (real wrong predictions of the release candidate)",
+    "errors": [
+      {
+        "kind": "needs reasoning",
+        "query": "...opens until at least 11 PM.",
+        "param": "operating_hours",
+        "pred": "11",
+        "gold": "23"
+      },
+      {
+        "kind": "label convention",
+        "query": "...the Royal Hotel in Paris...",
+        "param": "city",
+        "pred": "\"Paris\"",
+        "gold": "\"Paris, France\""
+      }
+    ],
+    "reasoning_errors_v3": 173,
+    "cost_usd": 15.79,
+    "cost_note": "account credit $32.96 -> $17.17 over three nights (v1-v2 $5.41, v3 $4.50, v4 $5.83), RTX 4090 / 5090 / PRO 6000 on Vast",
+    "benchmark_cost_usd": 2.04,
+    "_benchmark_cost_note": "docs/results/benchmark.md: GPU $1.76 (b1-b6) + OpenAI $0.28 (GPT-6 Luna BFCL + latency)"
+  },
+  "bfcl": {
+    "_source": "docs/results/benchmark.md + docs/results/bench/*.json (official bfcl-eval harness, BFCL v4). Leaderboard values are the public cross-check from the benchmark plan, never mixed into the harness columns.",
+    "_status": "final",
+    "columns": [
+      "Non-Live",
+      "Live",
+      "Irrelevance"
+    ],
+    "rows": [
+      {
+        "model": "ActionMan-0.1",
+        "params": "0.4B",
+        "ours": true,
+        "harness": [
+          66.02,
+          45.08,
+          81.2
+        ],
+        "leaderboard": [
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "model": "Qwen3-0.6B SFT, same data",
+        "params": "0.75B",
+        "harness": [
+          75.67,
+          54.11,
+          79.1
+        ],
+        "leaderboard": [
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "model": "Qwen3-0.6B (FC)",
+        "params": "0.75B",
+        "harness": [
+          72.85,
+          58.77,
+          80.92
+        ],
+        "leaderboard": [
+          71.79,
+          56.62,
+          80.84
+        ]
+      },
+      {
+        "model": "granite-4.0-350m",
+        "params": "0.35B",
+        "harness": [
+          67.67,
+          46.71,
+          61.07
+        ],
+        "leaderboard": [
+          67.92,
+          46.11,
+          60.84
+        ]
+      },
+      {
+        "model": "GPT-6 Luna (API)",
+        "params": "-",
+        "harness": [
+          78.21,
+          68.76,
+          75.6
+        ],
+        "leaderboard": [
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "model": "Hammer2.1-0.5b",
+        "params": "0.49B",
+        "harness": [
+          65.94,
+          54.7,
+          80.74
+        ],
+        "leaderboard": [
+          65.98,
+          54.63,
+          80.79
+        ]
+      },
+      {
+        "model": "Qwen3-1.7B (FC)",
+        "params": "2.0B",
+        "harness": [
+          82.67,
+          74.69,
+          76.79
+        ],
+        "leaderboard": [
+          82.92,
+          74.61,
+          76.54
+        ]
+      }
+    ],
+    "_note": "functiongemma-270m was not evaluated (gated for our HF token); GPT-6 Luna takes its row"
+  },
+  "latency": {
+    "_source": "docs/results/benchmark.md Table 2 (box b6, rep A): batch 1, same RTX 4090, 500 frozen BFCL v4 prompts, end to end; acc = official checker on the same 500",
+    "_status": "final",
+    "gpu": "RTX 4090",
+    "rows": [
+      {
+        "label": "ActionMan, compiled",
+        "engine": "torch + CUDA graphs",
+        "ours": true,
+        "p50_ms": 17.0,
+        "p95_ms": 28.9,
+        "acc": 59.2
+      },
+      {
+        "label": "Qwen3-0.6B SFT",
+        "engine": "vLLM, tuned",
+        "p50_ms": 122.4,
+        "p95_ms": 347.4,
+        "acc": 68.6
+      },
+      {
+        "label": "Qwen3-0.6B SFT",
+        "engine": "llama.cpp Q8_0, GPU",
+        "p50_ms": 159.4,
+        "p95_ms": 336.0,
+        "acc": 69.0
+      }
+    ],
+    "cpu": {
+      "label": "server CPU (8 threads, fp32)",
+      "actionman_s": "0.45",
+      "llama_cpp_qwen_s": "1.66"
+    }
+  },
+  "arena": {
+    "_source": "arena/viewer/replays.js (window.ARENA_REPLAYS); finishing times and ms per call are read from the replays",
+    "agents": [
+      "actionman",
+      "qwen",
+      "openai-gpt-6-luna"
+    ],
+    "fallback_agents": [
+      "scripted",
+      "random"
+    ],
+    "names": {
+      "actionman": "ActionMan",
+      "qwen": "Qwen3-0.6B SFT",
+      "openai-gpt-6-luna": "GPT-6 Luna",
+      "scripted": "Perfect driver",
+      "random": "Random"
+    },
+    "where": {
+      "actionman": "GPU",
+      "qwen": "GPU",
+      "openai-gpt-6-luna": "API",
+      "scripted": "reference bot",
+      "random": "reference bot"
+    },
+    "_nominal_note": "only used when an agent has no replay yet; otherwise ms per call is the median of the replays' p50",
+    "nominal_ms": {
+      "actionman": 26,
+      "qwen": 400,
+      "openai-gpt-6-luna": 1250
+    },
+    "picks": [
+      {
+        "game": "mining",
+        "level": 1,
+        "seed": 0,
+        "title": "Mining",
+        "line": "Dig to the diamond. Zombies don't wait."
+      },
+      {
+        "game": "rally",
+        "level": 2,
+        "seed": 0,
+        "title": "Rally",
+        "line": "Pace notes at full speed. A late call is a crash."
+      },
+      {
+        "game": "cycling",
+        "level": 2,
+        "seed": 0,
+        "title": "Cycling",
+        "line": "Every pedal() call is one stroke. Calls per second is power."
+      }
+    ]
+  },
+  "limits": [
+    {
+      "head": "Single turn only",
+      "body": "One request in, one set of calls out. No conversation memory."
+    },
+    {
+      "head": "No planning",
+      "body": "In the arena a planner says what to do. The model turns it into the call; it does not plan."
+    },
+    {
+      "head": "CPU is the weak spot",
+      "body": "0.45 s per call on 8 server cores, several seconds on a laptop. The speed story is a GPU story."
+    },
+    {
+      "head": "Research preview",
+      "body": "Trained on xLAM-60k, a research-only dataset. The weights follow that licence."
+    }
+  ],
+  "next": [
+    "A base-size encoder for on-device use",
+    "Multi-turn: carry the conversation",
+    "A version trained on games and agent loops"
+  ],
+  "end": {
+    "github": "github.com/shing1Sks/ActionMan",
+    "huggingface": "huggingface.co/shing-dev/ActionMan-0.1",
+    "credit": "Research by Shreyash Kumar Singh with an AI coding agent (Claude)"
+  }
+}
