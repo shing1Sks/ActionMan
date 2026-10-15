@@ -1,0 +1,139 @@
+{
+ "ci95": {
+  "live_irrelevance": [
+   77.60180995475113,
+   82.9185520361991
+  ],
+  "live_multiple": [
+   41.78537511870845,
+   47.863247863247864
+  ],
+  "live_parallel_multiple": [
+   20.833333333333336,
+   62.5
+  ],
+  "live_parallel": [
+   0.0,
+   31.25
+  ],
+  "live_relevance": [
+   37.5,
+   87.5
+  ],
+  "live_simple": [
+   41.47286821705426,
+   54.263565891472865
+  ],
+  "irrelevance": [
+   77.08333333333334,
+   86.66666666666667
+  ],
+  "multiple": [
+   73.5,
+   85.0
+  ],
+  "parallel_multiple": [
+   54.0,
+   68.0
+  ],
+  "parallel": [
+   54.0,
+   68.0
+  ],
+  "simple_javascript": [
+   42.0,
+   70.0
+  ],
+  "simple_java": [
+   45.0,
+   65.0
+  ],
+  "simple_python": [
+   72.5,
+   80.75
+  ]
+ },
+ "official_error_types": {
+  "live_irrelevance": {
+   "irrelevance_error:decoder_success": 174
+  },
+  "live_multiple": {
+   "simple_function_checker:wrong_func_name": 46,
+   "type_error:simple": 4,
+   "value_error:string": 358,
+   "multiple_function_checker:wrong_count": 108,
+   "simple_function_checker:missing_required": 3,
+   "simple_function_checker:missing_optional": 23,
+   "value_error:others": 36,
+   "value_error:list/tuple": 1,
+   "simple_function_checker:unexpected_param": 1
+  },
+  "live_parallel_multiple": {
+   "parallel_function_checker_no_order:cannot_find_match": 8,
+   "parallel_function_checker_no_order:wrong_count": 6
+  },
+  "live_parallel": {
+   "parallel_function_checker_no_order:cannot_find_match": 10,
+   "parallel_function_checker_no_order:wrong_count": 4
+  },
+  "live_relevance": {
+   "relevance_error:decoder_failed": 6
+  },
+  "live_simple": {
+   "value_error:string": 58,
+   "simple_function_checker:wrong_count": 32,
+   "value_error:others": 14,
+   "simple_function_checker:missing_required": 13,
+   "type_error:simple": 8,
+   "simple_function_checker:missing_optional": 7,
+   "type_error:nested": 1,
+   "value_error:dict_key": 1
+  },
+  "irrelevance": {
+   "irrelevance_error:decoder_success": 43
+  },
+  "multiple": {
+   "multiple_function_checker:wrong_count": 4,
+   "value_error:dict_key": 1,
+   "value_error:string": 16,
+   "value_error:others": 8,
+   "type_error:simple": 3,
+   "value_error:list/tuple": 8,
+   "simple_function_checker:wrong_func_name": 1
+  },
+  "parallel_multiple": {
+   "parallel_function_checker_no_order:wrong_count": 17,
+   "parallel_function_checker_no_order:cannot_find_match": 61
+  },
+  "parallel": {
+   "parallel_function_checker_no_order:wrong_count": 22,
+   "parallel_function_checker_no_order:cannot_find_match": 56
+  },
+  "simple_javascript": {
+   "type_error:simple": 16,
+   "simple_function_checker:wrong_count": 2,
+   "simple_function_checker:missing_optional": 1,
+   "simple_function_checker:missing_required": 1,
+   "value_error:string": 1,
+   "simple_function_checker:unexpected_param": 1
+  },
+  "simple_java": {
+   "type_error:simple": 22,
+   "value_error:string": 17,
+   "simple_function_checker:missing_required": 2,
+   "simple_function_checker:wrong_count": 2,
+   "value_error:others": 2
+  },
+  "simple_python": {
+   "value_error:others": 16,
+   "simple_function_checker:missing_optional": 8,
+   "value_error:string": 39,
+   "simple_function_checker:wrong_count": 4,
+   "type_error:nested": 4,
+   "type_error:simple": 11,
+   "value_error:list/tuple": 9,
+   "value_error:dict_key": 1,
+   "simple_function_checker:missing_required": 1
+  }
+ }
+}

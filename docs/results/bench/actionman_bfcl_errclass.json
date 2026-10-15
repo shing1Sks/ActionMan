@@ -1,0 +1,103 @@
+{
+ "live_multiple": {
+  "wrong_tool_or_count": 154,
+  "other": 19,
+  "span_length": 291,
+  "reasoning": 210,
+  "missing": 87,
+  "list_values": 4,
+  "truncated": 17,
+  "list_format": 1,
+  "extra_arg": 9,
+  "garbled": 2
+ },
+ "live_parallel_multiple": {
+  "extra_arg": 1,
+  "truncated": 1,
+  "other": 5,
+  "reasoning": 4,
+  "missing": 2,
+  "wrong_tool_or_count": 6,
+  "span_length": 7
+ },
+ "live_parallel": {
+  "reasoning": 2,
+  "span_length": 15,
+  "wrong_tool_or_count": 4
+ },
+ "live_simple": {
+  "span_length": 21,
+  "reasoning": 56,
+  "wrong_tool_or_count": 32,
+  "other": 13,
+  "garbled": 6,
+  "missing": 25,
+  "list_values": 2,
+  "list_format": 12,
+  "extra_arg": 2,
+  "truncated": 3
+ },
+ "multiple": {
+  "wrong_tool_or_count": 5,
+  "other": 4,
+  "list_values": 10,
+  "reasoning": 11,
+  "span_length": 9,
+  "garbled": 1,
+  "missing": 1,
+  "list_format": 2,
+  "truncated": 2
+ },
+ "parallel_multiple": {
+  "wrong_tool_or_count": 23,
+  "span_length": 17,
+  "reasoning": 13,
+  "garbled": 8,
+  "other": 19,
+  "list_values": 10,
+  "extra_arg": 8,
+  "list_format": 7,
+  "truncated": 3,
+  "missing": 3
+ },
+ "parallel": {
+  "wrong_tool_or_count": 22,
+  "other": 36,
+  "reasoning": 33,
+  "missing": 11,
+  "span_length": 14,
+  "list_format": 8,
+  "garbled": 6,
+  "list_values": 14,
+  "truncated": 6
+ },
+ "simple_javascript": {
+  "reasoning": 4,
+  "list_format": 8,
+  "other": 10,
+  "wrong_tool_or_count": 2,
+  "missing": 2,
+  "extra_arg": 2
+ },
+ "simple_java": {
+  "other": 10,
+  "span_length": 7,
+  "reasoning": 15,
+  "missing": 2,
+  "garbled": 1,
+  "list_format": 14,
+  "wrong_tool_or_count": 2
+ },
+ "simple_python": {
+  "other": 14,
+  "reasoning": 32,
+  "missing": 11,
+  "wrong_tool_or_count": 4,
+  "list_values": 14,
+  "truncated": 1,
+  "span_length": 18,
+  "garbled": 4,
+  "list_format": 8,
+  "extra_arg": 1
+ }
+}

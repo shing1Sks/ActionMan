@@ -1,0 +1,200 @@
+{
+ "actionman-s16": {
+  "categories": {
+   "live_irrelevance": 80.31674208144797,
+   "live_multiple": 44.91927825261159,
+   "live_parallel_multiple": 41.66666666666667,
+   "live_parallel": 12.5,
+   "live_relevance": 62.5,
+   "live_simple": 48.06201550387597,
+   "irrelevance": 82.08333333333333,
+   "multiple": 79.5,
+   "parallel_multiple": 61.0,
+   "parallel": 61.0,
+   "simple_javascript": 56.00000000000001,
+   "simple_java": 55.00000000000001,
+   "simple_python": 76.75
+  },
+  "Non-Live": 66.02083333333333,
+  "Non-Live (Python only)": 69.5625,
+  "Live": 45.07772020725389,
+  "Irrelevance": 81.20003770739065,
+  "Relevance": 62.5
+ },
+ "actionman-s16-compiled": {
+  "categories": {
+   "live_irrelevance": 80.42986425339367,
+   "live_multiple": 44.729344729344724,
+   "live_parallel_multiple": 41.66666666666667,
+   "live_parallel": 12.5,
+   "live_relevance": 62.5,
+   "live_simple": 47.674418604651166,
+   "irrelevance": 82.08333333333333,
+   "multiple": 79.0,
+   "parallel_multiple": 60.5,
+   "parallel": 61.5,
+   "simple_javascript": 56.00000000000001,
+   "simple_java": 55.00000000000001,
+   "simple_python": 76.5
+  },
+  "Non-Live": 65.875,
+  "Non-Live (Python only)": 69.375,
+  "Live": 44.85566247224278,
+  "Irrelevance": 81.25659879336351,
+  "Relevance": 62.5
+ },
+ "actionman-s16-last": {
+  "categories": {
+   "live_irrelevance": 80.42986425339367,
+   "live_multiple": 44.91927825261159,
+   "live_parallel_multiple": 41.66666666666667,
+   "live_parallel": 12.5,
+   "live_relevance": 62.5,
+   "live_simple": 47.674418604651166,
+   "irrelevance": 82.08333333333333,
+   "multiple": 79.5,
+   "parallel_multiple": 61.0,
+   "parallel": 61.0,
+   "simple_javascript": 56.00000000000001,
+   "simple_java": 55.00000000000001,
+   "simple_python": 76.75
+  },
+  "Non-Live": 66.02083333333333,
+  "Non-Live (Python only)": 69.5625,
+  "Live": 45.00370096225019,
+  "Irrelevance": 81.25659879336351,
+  "Relevance": 62.5
+ },
+ "am-qwen-sft-FC": {
+  "categories": {
+   "live_irrelevance": 78.61990950226244,
+   "live_multiple": 51.566951566951566,
+   "live_parallel_multiple": 58.333333333333336,
+   "live_parallel": 62.5,
+   "live_relevance": 75.0,
+   "live_simple": 63.565891472868216,
+   "irrelevance": 79.58333333333333,
+   "multiple": 86.5,
+   "parallel_multiple": 73.5,
+   "parallel": 76.5,
+   "simple_javascript": 54.0,
+   "simple_java": 59.0,
+   "simple_python": 85.5
+  },
+  "Non-Live": 75.66666666666667,
+  "Non-Live (Python only)": 80.5,
+  "Live": 54.108068097705406,
+  "Irrelevance": 79.10162141779789,
+  "Relevance": 75.0
+ },
+ "gpt-6-luna-FC": {
+  "categories": {
+   "live_irrelevance": 75.7918552036199,
+   "live_multiple": 68.85090218423552,
+   "live_parallel_multiple": 54.166666666666664,
+   "live_parallel": 62.5,
+   "live_relevance": 68.75,
+   "live_simple": 70.15503875968993,
+   "irrelevance": 75.41666666666667,
+   "multiple": 88.5,
+   "parallel_multiple": 68.5,
+   "parallel": 83.5,
+   "simple_javascript": 66.0,
+   "simple_java": 63.0,
+   "simple_python": 88.0
+  },
+  "Non-Live": 78.20833333333333,
+  "Non-Live (Python only)": 82.125,
+  "Live": 68.76387860843819,
+  "Irrelevance": 75.60426093514329,
+  "Relevance": 68.75
+ },
+ "ibm-granite_granite-4.0-350m": {
+  "categories": {
+   "live_irrelevance": 45.47511312217195,
+   "live_multiple": 42.92497625830959,
+   "live_parallel_multiple": 33.33333333333333,
+   "live_parallel": 68.75,
+   "live_relevance": 81.25,
+   "live_simple": 62.01550387596899,
+   "irrelevance": 76.66666666666667,
+   "multiple": 83.0,
+   "parallel_multiple": 56.99999999999999,
+   "parallel": 69.0,
+   "simple_javascript": 48.0,
+   "simple_java": 54.0,
+   "simple_python": 83.0
+  },
+  "Non-Live": 67.66666666666666,
+  "Non-Live (Python only)": 73.0,
+  "Live": 46.706143597335306,
+  "Irrelevance": 61.07088989441931,
+  "Relevance": 81.25
+ },
+ "MadeAgents_Hammer2.1-0.5b": {
+  "categories": {
+   "live_irrelevance": 76.47058823529412,
+   "live_multiple": 54.510921177587846,
+   "live_parallel_multiple": 41.66666666666667,
+   "live_parallel": 62.5,
+   "live_relevance": 68.75,
+   "live_simple": 56.201550387596896,
+   "irrelevance": 85.0,
+   "multiple": 81.5,
+   "parallel_multiple": 51.0,
+   "parallel": 69.5,
+   "simple_javascript": 50.0,
+   "simple_java": 52.0,
+   "simple_python": 83.25
+  },
+  "Non-Live": 65.9375,
+  "Non-Live (Python only)": 71.3125,
+  "Live": 54.70022205773501,
+  "Irrelevance": 80.73529411764706,
+  "Relevance": 68.75
+ },
+ "Qwen_Qwen3-0.6B-FC": {
+  "categories": {
+   "live_irrelevance": 79.75113122171946,
+   "live_multiple": 57.644824311490986,
+   "live_parallel_multiple": 41.66666666666667,
+   "live_parallel": 62.5,
+   "live_relevance": 68.75,
+   "live_simple": 64.72868217054264,
+   "irrelevance": 82.08333333333333,
+   "multiple": 83.0,
+   "parallel_multiple": 69.0,
+   "parallel": 73.0,
+   "simple_javascript": 57.99999999999999,
+   "simple_java": 55.00000000000001,
+   "simple_python": 86.25
+  },
+  "Non-Live": 72.85416666666667,
+  "Non-Live (Python only)": 77.8125,
+  "Live": 58.771280532938576,
+  "Irrelevance": 80.9172322775264,
+  "Relevance": 68.75
+ },
+ "Qwen_Qwen3-1.7B-FC": {
+  "categories": {
+   "live_irrelevance": 72.73755656108597,
+   "live_multiple": 73.59924026590693,
+   "live_parallel_multiple": 62.5,
+   "live_parallel": 62.5,
+   "live_relevance": 75.0,
+   "live_simple": 81.0077519379845,
+   "irrelevance": 80.83333333333333,
+   "multiple": 93.0,
+   "parallel_multiple": 83.0,
+   "parallel": 85.0,
+   "simple_javascript": 57.99999999999999,
+   "simple_java": 59.0,
+   "simple_python": 92.0
+  },
+  "Non-Live": 82.66666666666666,
+  "Non-Live (Python only)": 88.25,
+  "Live": 74.68541820873428,
+  "Irrelevance": 76.78544494720964,
+  "Relevance": 75.0
+ }
+}
