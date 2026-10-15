@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ActionMan Arena</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Pixelify+Sans:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rock-0: #14121c; --rock-1: #1c1926; --rock-2: #282435; --rock-3: #3a3549;
+    --chalk: #ece6da; --dust: #9a92a6;
+    --lantern: #f2b35b; --diamond: #62e3ea; --ember: #e8634f;
+    --display: "Pixelify Sans", ui-monospace, monospace;
+    --body: "Instrument Sans", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    --pad: clamp(16px, 3vw, 36px);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    color: var(--chalk); font: 14px/1.45 var(--body);
+    background: radial-gradient(1100px 520px at 50% -12%, #2b2442 0%, transparent 70%), var(--rock-0);
+    min-height: 100vh;
+  }
+  :focus-visible { outline: 2px solid var(--diamond); outline-offset: 2px; }
+
+  /* ---------- masthead ---------- */
+  .top { padding: 28px var(--pad) 14px; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand svg { width: 30px; height: 30px; image-rendering: pixelated; flex: none; }
+  h1 { font: 700 clamp(26px, 3.4vw, 38px)/1 var(--display); margin: 0; letter-spacing: .01em; }
+  h1 span { color: var(--dust); font-weight: 500; }
+  .thesis { color: var(--dust); max-width: 68ch; margin: 10px 0 0; font-size: 15px; }
+  .thesis b { color: var(--chalk); font-weight: 600; }
+  .thesis .amber { color: var(--lantern); font-weight: 600; }
+
+  .events { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 18px; border-bottom: 1px solid var(--rock-2); }
+  .events button { border: 0; border-radius: 8px 8px 0 0; background: transparent; height: auto; padding: 8px 16px 9px; color: var(--dust);
+                   font: 500 17px/1.2 var(--display); border-bottom: 2px solid transparent; text-align: left; }
+  .events button[aria-selected="true"] { color: var(--chalk); border-bottom-color: var(--lantern); background: var(--rock-1); }
+  .events small { display: block; font: 400 11.5px var(--body); color: var(--dust); margin-top: 2px; }
+
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 16px; }
+  select, button { font: 500 13px var(--body); color: var(--chalk); background: var(--rock-1); border: 1px solid var(--rock-3);
+                   border-radius: 7px; height: 34px; padding: 0 12px; cursor: pointer; }
+  select:hover, button:hover { border-color: var(--dust); }
+  #play { background: var(--lantern); color: #1d1408; border-color: var(--lantern); font-weight: 600; min-width: 84px; }
+  .speeds { display: inline-flex; border: 1px solid var(--rock-3); border-radius: 7px; overflow: hidden; }
+  .speeds button { border: 0; border-radius: 0; background: transparent; height: 32px; padding: 0 10px; color: var(--dust); }
+  .speeds button[aria-pressed="true"] { background: var(--rock-2); color: var(--chalk); }
+  #scrub { width: clamp(150px, 26vw, 420px); accent-color: var(--lantern); }
+  #clock { font: 600 19px var(--mono); min-width: 80px; font-variant-numeric: tabular-nums; }
+  .refs { color: var(--dust); font-size: 13px; display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+  .refs input { accent-color: var(--diamond); }
+
+  /* ---------- level ribbon ---------- */
+  .level { margin: 6px var(--pad) 14px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px;
+           padding: 14px 18px; background: var(--rock-1); border: 1px solid var(--rock-2); border-radius: 10px; }
+  .level .tag { font: 700 22px var(--display); color: var(--lantern); }
+  .level .name { font: 500 20px var(--display); }
+  .level .desc { color: var(--dust); flex: 1 1 280px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+  .chip { font: 12px var(--mono); background: var(--rock-2); border-radius: 5px; padding: 3px 8px; color: var(--chalk); }
+  .chip s { color: var(--dust); text-decoration-color: var(--ember); }
+  .chip.same { color: var(--dust); }
+
+  /* ---------- race strip ---------- */
+  .track { margin: 0 var(--pad); padding: 14px 18px 10px; background: var(--rock-1); border: 1px solid var(--rock-2); border-radius: 10px; }
+  .track h2 { font: 500 15px var(--display); margin: 0 0 8px; color: var(--dust); letter-spacing: .04em; }
+  #strip { width: 100%; display: block; }
+  .track p { margin: 6px 0 0; font-size: 12px; color: var(--dust); }
+  .track p i { font-style: normal; color: var(--lantern); }
+  .track p em { font-style: normal; color: var(--diamond); }
+  .track p u { text-decoration: none; color: var(--ember); }
+
+  /* ---------- lanes ---------- */
+  #lanes { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 18px; padding: 18px var(--pad) 28px; }
+  .lane { background: var(--rock-1); border: 1px solid var(--rock-2); border-radius: 12px; overflow: hidden;
+          display: flex; flex-direction: column; transition: border-color .4s, box-shadow .4s; }
+  .lane.win { border-color: #3d8f95; box-shadow: 0 0 0 1px #3d8f95, 0 18px 50px -24px var(--diamond); }
+  .lane.dead { border-color: #5a2a26; }
+  .lane header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 14px 16px 6px; }
+  .lane h3 { font: 600 21px/1.1 var(--body); margin: 0; }
+  .lane header p { margin: 3px 0 0; color: var(--dust); font-size: 12px; }
+  .pace { text-align: right; flex: none; }
+  .pace b { font: 600 24px/1 var(--mono); color: var(--lantern); font-variant-numeric: tabular-nums; }
+  .pace span { display: block; font-size: 10.5px; color: var(--dust); text-transform: uppercase; letter-spacing: .1em; margin-top: 3px; }
+  .vitals { display: flex; align-items: center; gap: 14px; padding: 2px 16px 10px; min-height: 31px; font-size: 12px; color: var(--dust); }
+  .vitals b { color: var(--chalk); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .hearts { display: flex; gap: 3px; }
+  .hearts svg, .food svg { width: 15px; height: 13px; image-rendering: pixelated; display: block; }
+  .food { display: flex; gap: 3px; margin-left: auto; }
+  .stage { position: relative; margin: 0 12px; border-radius: 7px; overflow: hidden; background: #0c0a12; }
+  .stage canvas { display: block; width: 100%; height: auto; transition: filter .6s; }
+  .stage.px canvas { image-rendering: pixelated; }
+  .lane.dead .stage canvas { filter: grayscale(.85) brightness(.7); }
+  .stamp { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 2px;
+           background: rgba(16, 13, 24, .38); opacity: 0; transition: opacity .35s; pointer-events: none; }
+  .stamp.show { opacity: 1; }
+  .stamp b { font: 700 clamp(26px, 3vw, 36px)/1 var(--display); letter-spacing: .04em; text-shadow: 0 3px 0 rgba(0,0,0,.45); }
+  .stamp span { font: 500 15px var(--display); color: var(--chalk); }
+  .stamp.win b { color: var(--diamond); } .stamp.dead b { color: var(--ember); } .stamp.timeout b { color: var(--lantern); }
+  .rank { position: absolute; top: 8px; left: 8px; font: 700 14px var(--display); background: var(--diamond); color: #0d2a2c;
+          padding: 2px 8px; border-radius: 5px; opacity: 0; transition: opacity .35s; }
+  .rank.show { opacity: 1; }
+
+  .radio { padding: 12px 16px 8px; display: grid; gap: 7px; }
+  .line { display: grid; grid-template-columns: 74px 1fr; align-items: baseline; gap: 8px; min-height: 22px; }
+  .line > span:first-child { font-size: 10.5px; color: var(--dust); text-transform: uppercase; letter-spacing: .1em; }
+  .order q { font-size: 15.5px; font-weight: 500; quotes: "\201C" "\201D"; }
+  .call code { font: 600 13px var(--mono); color: var(--chalk); overflow-wrap: anywhere; }
+  .call.bad code { color: var(--ember); }
+  .call .res { color: var(--dust); font-size: 12.5px; margin-left: 6px; }
+  .call.thinking code { color: var(--lantern); }
+  .thinkbar { height: 4px; background: var(--rock-2); border-radius: 2px; overflow: hidden; }
+  .thinkbar i { display: block; height: 100%; width: 0; background: var(--lantern); }
+
+  .log { list-style: none; margin: 0; padding: 4px 16px 12px; font: 11.5px/1.75 var(--mono); color: var(--dust); height: 128px; overflow: hidden; }
+  .log li { display: grid; grid-template-columns: 52px 56px 1fr; gap: 6px; white-space: nowrap; }
+  .log li code { color: var(--chalk); overflow: hidden; text-overflow: ellipsis; }
+  .log li.bad code { color: var(--ember); }
+  .log time, .log .ms { font-variant-numeric: tabular-nums; }
+  .log .ms { color: var(--lantern); }
+  .split { padding: 2px 16px 12px; }
+  .split .bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--rock-2); }
+  .split .bar i { display: block; height: 100%; }
+  .split .bar .th { background: var(--lantern); } .split .bar .ac { background: #4f6f9a; }
+  .split p { margin: 6px 0 0; display: flex; gap: 16px; font-size: 12px; color: var(--dust); }
+  .split .k::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; vertical-align: 0; }
+  .split .k.th::before { background: var(--lantern); } .split .k.ac::before { background: #4f6f9a; }
+  .split b { color: var(--chalk); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tally { margin-top: auto; border-top: 1px solid var(--rock-2); padding: 10px 16px; display: flex; gap: 18px; color: var(--dust); font-size: 12px; }
+  .tally b { color: var(--chalk); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .empty { margin: 40px var(--pad); padding: 28px; border: 1px dashed var(--rock-3); border-radius: 12px; color: var(--dust); }
+  .empty code { font-family: var(--mono); color: var(--chalk); }
+  .foot { padding: 0 var(--pad) 32px; color: var(--dust); font-size: 12px; display: flex; flex-wrap: wrap; gap: 18px; }
+  .foot b { color: var(--chalk); font-weight: 600; }
+  @media (max-width: 560px) { .line { grid-template-columns: 1fr; gap: 2px; } .log li { grid-template-columns: 46px 50px 1fr; } }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <svg viewBox="0 0 8 8" aria-hidden="true"><g fill="#1f8f99"><rect x="2" y="1" width="4" height="1"/><rect x="1" y="2" width="6" height="2"/><rect x="2" y="4" width="4" height="1"/><rect x="3" y="5" width="2" height="1"/></g><g fill="#62e3ea"><rect x="2" y="2" width="3" height="1"/><rect x="2" y="3" width="2" height="1"/><rect x="3" y="4" width="2" height="1"/></g><rect x="2" y="2" width="1" height="1" fill="#e9feff"/></svg>
+    <h1>ActionMan <span>Arena</span></h1>
+  </div>
+  <p class="thesis">Every model sees the same situation and has to answer with one tool call on <b>this level's controls</b>. The world doesn't wait: <span class="amber">every millisecond of thinking</span> is time the race runs on without you.</p>
+  <nav class="events" role="tablist" aria-label="Event" id="events"></nav>
+  <div class="controls">
+    <select id="match" aria-label="Race"></select>
+    <button id="play" type="button">Play</button>
+    <div class="speeds" role="group" aria-label="Playback speed"></div>
+    <input id="scrub" type="range" min="0" max="10" step="0.001" value="0" aria-label="Race time">
+    <output id="clock" for="scrub">0.00 s</output>
+    <label class="refs"><input type="checkbox" id="refs"> Show reference bots</label>
+  </div>
+</header>
+
+<section class="level" id="level" aria-live="polite"></section>
+
+<section class="track" aria-label="Race strip">
+  <h2>Race strip</h2>
+  <canvas id="strip" height="120"></canvas>
+  <p>Each tick is one tool call: <em>valid</em> or <u>invalid</u>. <i>Amber</i> is time spent thinking while the world kept moving.</p>
+</section>
+
+<main id="lanes"></main>
+
+<footer class="foot">
+  <span><b>Space</b> play / pause</span><span><b>&larr; &rarr;</b> step</span><span><b>R</b> restart</span>
+  <span>Latency is real, measured on the hardware named under each model.</span>
+</footer>
+
+<script src="replays.js"></script>
+<script>
+"use strict";
+window.ARENA = {
+  games: {},
+  RM: matchMedia("(prefers-reduced-motion: reduce)").matches,
+  rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; },
+  frameIdx(r, t) {                                            // last frame at or before tick t (frames are sparse)
+    const f = r.frames; let lo = 0, hi = f.length - 1;
+    while (lo < hi) { const m = (lo + hi + 1) >> 1; if (f[m].t <= t) lo = m; else hi = m - 1; }
+    return lo;
+  },
+};
+</script>
+<script src="games/mining.js"></script>
+<script src="games/rally.js"></script>
+<script src="games/cycling.js"></script>
+<script>
+"use strict";
+const A = window.ARENA, R = (window.ARENA_REPLAYS || []).filter(r => A.games[r.game]);
+const DRIVERS = {
+  actionman: { name: "ActionMan", sub: "395M encoder + diffusion slot filler" },
+  qwen: { name: "Qwen3-0.6B", sub: "fine-tuned on ActionMan's data" },
+  "openai-gpt-6-luna": { name: "GPT-6 Luna", sub: "OpenAI API, low reasoning" },
+  scripted: { name: "Perfect driver", sub: "executes the plan instantly", ref: true },
+  random: { name: "Random", sub: "random tool, random arguments", ref: true },
+};
+const ORDER = ["actionman", "qwen", "openai", "claude", "scripted", "random"];
+const rank = a => { const i = ORDER.findIndex(o => a.startsWith(o)); return i < 0 ? 99 : i; };
+const where = r => /GPU/.test(r.label) ? "GPU" : /CPU/.test(r.label) ? "laptop CPU" : r.agent.startsWith("openai") ? "API" : "";
+const fmtMs = ms => ms >= 1000 ? (ms / 1000).toFixed(ms >= 10000 ? 0 : 1) + " s" : ms >= 10 ? Math.round(ms) + " ms" : ms.toFixed(1) + " ms";
+const fmtS = s => s >= 10 ? s.toFixed(1) + " s" : s.toFixed(2) + " s";
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const $ = id => document.getElementById(id);
+
+for (const r of R) {
+  const d = DRIVERS[r.agent] || { name: r.label, sub: r.note || "" }, w = where(r);
+  r.d = { ...d, sub: d.sub + (w ? " · " + w : "") };
+  r.end = r.frames[r.frames.length - 1].t; r.endS = r.end / r.tps;
+  A.games[r.game].prep(r);
+}
+const byGame = {};
+for (const r of R) ((byGame[r.game] ||= {})[`L${r.level}-s${r.seed}`] ||= []).push(r);
+const gameNames = Object.keys(A.games).filter(g => byGame[g]);
+let game = gameNames[0], T = 0, playing = false, speed = 1, lanes = [], tmax = 1, last = null;
+const sel = $("match"), playBtn = $("play"), scrub = $("scrub"), clock = $("clock"), refs = $("refs");
+
+function keysFor(g) {
+  return Object.keys(byGame[g] || {}).sort((a, b) => { const [la, sa] = a.match(/\d+/g).map(Number), [lb, sb] = b.match(/\d+/g).map(Number); return la - lb || sa - sb; });
+}
+function buildTabs() {
+  $("events").innerHTML = gameNames.map(g => `<button type="button" role="tab" data-g="${g}" aria-selected="${g === game}">${A.games[g].title}<small>${A.games[g].tagline}</small></button>`).join("");
+  $("events").querySelectorAll("button").forEach(b => b.onclick = () => { game = b.dataset.g; buildTabs(); buildSelect(); T = 0; playing = false; playBtn.textContent = "Play"; setup(); });
+}
+function buildSelect(want) {
+  sel.innerHTML = "";
+  const keys = keysFor(game);
+  for (const k of keys) { const [l, s] = k.match(/\d+/g); sel.add(new Option(`L${l} · ${A.games[game].levels[l].name} · seed ${s}`, k)); }
+  sel.value = keys.includes(want) ? want : keys.includes("L1-s0") ? "L1-s0" : keys[0] || "";
+}
+
+function levelRibbon(r) {
+  const G = A.games[r.game], L = G.levels[r.level], rn = r.renames, chips = [];
+  for (const [c, n] of Object.entries(rn.tools)) chips.push(`<span class="chip"><s>${esc(c)}</s> → ${esc(n)}</span>`);
+  for (const [c, n] of Object.entries(rn.params)) chips.push(`<span class="chip"><s>${esc(c)}</s> → ${esc(n)}</span>`);
+  for (const m of Object.values(rn.values)) if (Object.keys(m).length)
+    chips.push(`<span class="chip"><s>${Object.keys(m).map(esc).join(" · ")}</s> → ${Object.values(m).map(esc).join(" · ")}</span>`);
+  if (!chips.length) for (const t of r.tools) chips.push(`<span class="chip same">${esc(t.name)}(${Object.keys(t.parameters.properties).map(esc).join(", ")})</span>`);
+  $("level").innerHTML = `<span class="tag">L${r.level}</span><span class="name">${L.name}</span><span class="desc">${L.desc}</span>
+    <div class="chips" aria-label="Controls this level">${chips.join("")}</div>`;
+}
+
+function setup() {
+  const all = ((byGame[game] || {})[sel.value] || []).slice().sort((a, b) => rank(a.agent) - rank(b.agent));
+  let list = refs.checked ? all : all.filter(r => !r.d.ref);
+  if (!list.length) list = all;
+  const main = $("lanes"); main.innerHTML = "";
+  if (!all.length) {
+    main.innerHTML = `<div class="empty">No races yet. Run <code>python -m arena.run --games mining --agents scripted random</code>, then reload.</div>`;
+    $("level").innerHTML = ""; lanes = []; return;
+  }
+  levelRibbon(all[0]);
+  history.replaceState(null, "", `#${game}/${sel.value}`);
+  const G = A.games[game];
+  lanes = list.map(r => {
+    const el = document.createElement("article"); el.className = "lane";
+    el.innerHTML = `<header><div><h3>${esc(r.d.name)}</h3><p>${esc(r.d.sub)}</p></div>
+        <div class="pace"><b>${fmtMs(r.result.lat_ms_p50)}</b><span>per call</span></div></header>
+      <div class="vitals"></div>
+      <div class="stage${G.pixelated ? " px" : ""}"><canvas width="${G.size[0]}" height="${G.size[1]}"></canvas>
+        <div class="rank"></div><div class="stamp"><b></b><span></span></div></div>
+      <div class="radio">
+        <div class="line order"><span>Sees</span><q></q></div>
+        <div class="line call"><span>Tool call</span><div><code></code><span class="res"></span></div></div>
+        <div class="thinkbar" aria-hidden="true"><i></i></div>
+      </div>
+      <ol class="log" aria-label="Recent calls"></ol>
+      <div class="split" aria-label="Race time split"><div class="bar"><i class="th"></i><i class="ac"></i></div><p><span class="k th">thinking <b class="tth"></b></span><span class="k ac">acting <b class="tac"></b></span></p></div>
+      <div class="tally"><span>calls <b class="n"></b></span><span>invalid <b class="inv"></b></span><span><span class="mk"></span> <b class="mv"></b></span></div>`;
+    main.appendChild(el);
+    return { r, el, ctx: el.querySelector("canvas").getContext("2d"), q: el.querySelector("q"), code: el.querySelector(".call code"),
+             res: el.querySelector(".call .res"), callLine: el.querySelector(".call"), bar: el.querySelector(".thinkbar i"),
+             log: el.querySelector(".log"), vit: el.querySelector(".vitals"), stamp: el.querySelector(".stamp"), rank: el.querySelector(".rank"), memo: {} };
+  });
+  tmax = Math.max(0.5, ...list.map(r => r.endS));
+  scrub.max = tmax;
+  const winners = list.filter(r => r.result.outcome === "win").sort((a, b) => a.result.seconds - b.result.seconds);
+  lanes.forEach(L => { const i = winners.indexOf(L.r); L.place = i < 0 ? 0 : i + 1; });
+  T = Math.min(T, tmax); stripW = 0; draw();
+}
+
+/* ---------- panel text ---------- */
+function setText(L, key, node, val, html) { if (L.memo[key] === val) return; L.memo[key] = val; if (html) node.innerHTML = val; else node.textContent = val; }
+function currentCall(r, t) {
+  let cur = null;
+  for (const c of r.calls) { if (c.t_obs > t) break; cur = c; }
+  return cur;
+}
+function updatePanel(L, t, f, cur) {
+  const r = L.r, G = A.games[r.game], ended = t >= r.end, res = r.result, tps = r.tps;
+  setText(L, "vit", L.vit, G.vitals(r, f, t), true);
+  L.el.classList.toggle("win", ended && res.outcome === "win");
+  L.el.classList.toggle("dead", ended && res.outcome === "dead");
+  const stampTxt = !ended ? "" : `${G.words[res.outcome]}|${res.outcome === "timeout" ? "" : (res.outcome === "win" ? "in " : "at ") + fmtS(res.seconds)}`;
+  if (L.memo.stamp !== stampTxt) {
+    L.memo.stamp = stampTxt; const [a, b] = stampTxt.split("|");
+    L.stamp.className = "stamp" + (ended ? " show " + res.outcome : ""); L.stamp.querySelector("b").textContent = a || ""; L.stamp.querySelector("span").textContent = b || "";
+  }
+  const place = ended && L.place ? ["", "1st", "2nd", "3rd", "4th", "5th"][L.place] : "";
+  setText(L, "rank", L.rank, place); L.rank.classList.toggle("show", !!place);
+  if (cur) {
+    setText(L, "q", L.q, cur.obs);
+    const thinking = t < cur.t_land;
+    setText(L, "code", L.code, thinking ? "thinking…" : cur.call);
+    setText(L, "res", L.res, thinking ? "" : cur.ok ? "→ " + cur.result : "✕ " + cur.err);
+    L.callLine.className = "line call" + (thinking ? " thinking" : cur.ok ? "" : " bad");
+    L.bar.style.width = (thinking ? 100 * (t - cur.t_obs) / Math.max(1, cur.t_land - cur.t_obs) : 0).toFixed(1) + "%";
+  }
+  let n = 0, inv = 0, think = 0; const items = [];
+  for (const c of r.calls) { if (c.t_land > t) break; n++; if (!c.ok) inv++; think += c.lat_ms / 1000; items.push(c); }
+  if (cur && t < cur.t_land) think += (t - cur.t_obs) / tps;
+  const recent = items.slice(-7).reverse().map(c => `<li class="${c.ok ? "" : "bad"}"><time>${fmtS(c.t_land / tps)}</time><span class="ms">${fmtMs(c.lat_ms)}</span><code>${esc(c.ok ? c.call + "  → " + c.result : c.call + "  ✕ " + c.err)}</code></li>`).join("");
+  setText(L, "log", L.log, recent, true);
+  setText(L, "n", L.el.querySelector(".n"), String(n)); setText(L, "inv", L.el.querySelector(".inv"), String(inv));
+  const [mk, mv] = G.meter(r, f, t);
+  setText(L, "mk", L.el.querySelector(".mk"), mk); setText(L, "mv", L.el.querySelector(".mv"), mv);
+  const total = Math.max(t / tps, 1e-6), act = Math.max(0, total - think);
+  setText(L, "tth", L.el.querySelector(".tth"), fmtS(think)); setText(L, "tac", L.el.querySelector(".tac"), fmtS(act));
+  L.el.querySelector(".bar .th").style.width = (100 * Math.min(1, think / total)).toFixed(1) + "%";
+  L.el.querySelector(".bar .ac").style.width = (100 * act / total).toFixed(1) + "%";
+}
+
+/* ---------- race strip ---------- */
+const strip = $("strip"); let stripW = 0; const sctx = strip.getContext("2d");
+function drawStrip() {
+  const w = strip.clientWidth, narrow = w < 560, rowH = 30, labelW = narrow ? 92 : 150, resW = narrow ? 80 : 124;
+  const h = lanes.length * rowH + 26, dpr = devicePixelRatio || 1;
+  if (stripW !== w || strip.height !== Math.round(h * dpr)) { strip.width = w * dpr; strip.height = Math.round(h * dpr); strip.style.height = h + "px"; stripW = w; }
+  const x = sctx; x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, w, h);
+  const tw = Math.max(40, w - labelW - resW - 12), X = s => labelW + s / tmax * tw;
+  const step = [0.5, 1, 2, 5, 10, 20, 30, 60].find(s => tmax / s <= 8) || 120;
+  x.font = "500 11px 'JetBrains Mono', monospace"; x.fillStyle = "#5d566b";
+  for (let s = 0; s <= tmax + 1e-9; s += step) { const xx = X(s); x.fillRect(xx, 4, 1, h - 26); x.fillText(s + "s", xx + 3, h - 8); }
+  lanes.forEach((L, i) => {
+    const r = L.r, mid = 4 + i * rowH + rowH / 2, tps = r.tps, Tt = T * tps;
+    x.font = `600 ${narrow ? 12 : 13}px 'Instrument Sans', system-ui, sans-serif`; x.fillStyle = "#ece6da"; x.fillText(r.d.name, 0, mid + 4);
+    x.fillStyle = "#2b2738"; x.fillRect(labelW, mid - 1, tw, 2);
+    for (const c of r.calls) {
+      if (c.t_obs > Tt) break;
+      const a = X(c.t_obs / tps), b = X(Math.min(c.t_land, Tt) / tps);
+      if (b - a >= .6) { x.fillStyle = "rgba(242,179,91,.5)"; x.fillRect(a, mid - 5, b - a, 10); }
+      if (c.t_land <= Tt) { x.fillStyle = c.ok ? "#62e3ea" : "#e8634f"; x.fillRect(X(c.t_land / tps) - .5, mid - 8, 1.5, 16); }
+    }
+    let label = "", col = "#9a92a6";
+    if (Tt >= r.end) {
+      const o = r.result.outcome, ex = X(r.endS);
+      col = o === "win" ? "#62e3ea" : o === "dead" ? "#e8634f" : "#f2b35b";
+      x.fillStyle = col;
+      if (o === "win") { x.beginPath(); x.moveTo(ex, mid - 7); x.lineTo(ex + 6, mid); x.lineTo(ex, mid + 7); x.lineTo(ex - 6, mid); x.fill(); }
+      else { x.fillRect(ex - 1, mid - 7, 3, 14); }
+      label = o === "win" ? `done ${fmtS(r.result.seconds)}` : o === "dead" ? `out ${fmtS(r.result.seconds)}` : "out of time";
+    } else {
+      let n = 0; for (const c of r.calls) { if (c.t_land > Tt) break; n++; } label = `${n} calls`;
+    }
+    x.font = "600 12px 'JetBrains Mono', monospace"; x.fillStyle = col; x.fillText(label, labelW + tw + 12, mid + 4);
+  });
+  x.fillStyle = "#ece6da"; x.fillRect(Math.round(X(T)), 2, 1.5, h - 24);
+}
+
+/* ---------- loop ---------- */
+let amb = 0;
+function draw() {
+  clock.textContent = fmtS(T); scrub.value = T;
+  for (const L of lanes) {
+    const t = Math.min(T * L.r.tps, L.r.end), cur = currentCall(L.r, t);
+    const f = A.games[L.r.game].draw(L, t, amb, cur);
+    updatePanel(L, t, f, cur);
+  }
+  drawStrip();
+}
+function loop(ts) {
+  if (last !== null) {
+    const dt = Math.min(0.1, (ts - last) / 1000);
+    amb += dt;
+    if (playing) { T = Math.min(tmax, T + dt * speed); if (T >= tmax) { playing = false; playBtn.textContent = "Replay"; } }
+  }
+  last = ts;
+  draw();                                                   // ambient effects keep animating while paused
+  requestAnimationFrame(loop);
+}
+function toggle() { if (T >= tmax) T = 0; playing = !playing; playBtn.textContent = playing ? "Pause" : "Play"; }
+playBtn.onclick = toggle;
+scrub.oninput = e => { T = +e.target.value; };
+const sp = document.querySelector(".speeds");
+for (const s of [0.25, 0.5, 1, 2, 5]) {
+  const b = document.createElement("button"); b.type = "button"; b.textContent = s + "×"; b.setAttribute("aria-pressed", s === 1);
+  b.onclick = () => { speed = s; sp.querySelectorAll("button").forEach(z => z.setAttribute("aria-pressed", z === b)); };
+  sp.appendChild(b);
+}
+sel.onchange = () => { playing = false; playBtn.textContent = "Play"; T = 0; setup(); };
+refs.onchange = setup;
+addEventListener("resize", () => { stripW = 0; });
+addEventListener("keydown", e => {
+  if (e.target.tagName === "SELECT" || e.target.tagName === "INPUT" && e.target.type !== "range") return;
+  if (e.code === "Space") { e.preventDefault(); toggle(); }
+  else if (e.key === "ArrowRight") { T = Math.min(tmax, T + tmax / 20); }
+  else if (e.key === "ArrowLeft") { T = Math.max(0, T - tmax / 20); }
+  else if (e.key === "r" || e.key === "R") { T = 0; }
+});
+const [wg, wk] = location.hash.slice(1).split("/");
+if (gameNames.includes(wg)) game = wg;
+buildTabs(); buildSelect(wk); setup(); requestAnimationFrame(loop);
+</script>
+</body>
+</html>
