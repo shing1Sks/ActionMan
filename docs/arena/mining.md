@@ -1,4 +1,4 @@
-# Arena event: Mining
+# Arena event: 2D Minecraft
 
 Dig down to a diamond while zombies close in. Pixel art, lantern light, follow camera (`arena/viewer/games/mining.js`).
 

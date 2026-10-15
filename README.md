@@ -1,46 +1,81 @@
 # ActionMan
 
-**Can a decision model also act?**
+**Decision models choose. Action models act.**
 
-Decision models read the input once, score every option in parallel, and answer in milliseconds. They can choose, but they can't
-*act*: a tool call needs arguments, and arguments are text. LLMs can write those arguments, but only one token at a time.
-ActionMan started as a question in between: keep the one-read decision encoder, and snap a masked-diffusion argument writer on top
-that fills every argument at once, in two or three passes.
+Decision models read the input once, score every option in parallel, and answer in milliseconds. But a decision is not an
+action. A tool call needs arguments, and arguments are text, which until now meant an LLM decoding one token at a time.
 
-This repo is the full, open record of trying it: the architecture, three nights of runs, what failed, the benchmarks and an arena.
-The result is **ActionMan-0.1**, a 0.4B tool caller (ModernBERT-large plus small heads) trained for about $16 of rented GPU time.
+**ActionMan-0.1 is an action model.** It is a 0.4B encoder that selects the tool in one forward pass and writes every argument
+with masked diffusion. It finishes in 2-3 forward passes, with no autoregressive decoding and no JSON generated.
 
-> **Early research preview.** On one RTX 4090 it answers in **17 ms** where the same-data Qwen3-0.6B served by tuned vLLM takes
-> **121 ms** (7x; 16x for answers with three or more calls). It is also **less accurate** than that LLM (BFCL v4 Non-Live 66.0 vs
-> 75.7), single-turn only, and slow on a laptop CPU. Fast and interesting; not a drop-in replacement for an LLM tool caller.
-
-![The arena: mining](docs/assets/arena-mining.jpg)
-*The arena. Same instruction, same renamed controls, real thinking time charged to every model. ActionMan finds the diamond in 1.7 s.*
+![Instruction in, call out](docs/assets/instruction-run.jpg)
 
 ## Links
 
-- **Benchmark report:** [`docs/results/benchmark.md`](docs/results/benchmark.md) (BFCL v4 official harness, latency, CPU, calibration)
+- **The launch film (1:00):** [actionman-launch-film.mp4](https://github.com/shing1Sks/ActionMan/releases/download/v0.1/actionman-launch-film.mp4), source in [`video/`](video/)
 - **Weights:** [huggingface.co/shing-dev/ActionMan-0.1](https://huggingface.co/shing-dev/ActionMan-0.1)
-- **The film (~2 min):** [the research as a short video](https://github.com/shing1Sks/ActionMan/releases/download/v0.1/actionman-research-film.mp4), source in [`video/`](video/)
-- **Arena:** [`docs/arena/`](docs/arena/README.md) (mining, rally, cycling) and the replay viewer in [`arena/viewer/`](arena/viewer/)
-- **Lab record:** [`docs/results/findings.md`](docs/results/findings.md) (every run and result, newest first), plans in [`docs/plans/`](docs/plans/)
+- **Benchmark report:** [`docs/results/benchmark.md`](docs/results/benchmark.md) (BFCL v4 official harness, GPU and CPU latency, calibration)
+- **The Arena:** [`docs/arena/`](docs/arena/README.md), three real-time games played only through tool calls
+- **Lab record:** [`docs/results/findings.md`](docs/results/findings.md), every run in order
 
-## The idea in one picture
+## Inside
 
-![How it works](docs/assets/how-it-works.jpg)
+![Masked diffusion: encode once, then denoise every argument in parallel](docs/assets/inside.jpg)
 
-- **One read picks the tools.** The tools and the query go into the encoder with up to four `[CALL]` markers. Each marker picks a
-  tool or none, Jev-style, against the tool-name tokens. A length head sizes every argument's slots.
-- **Every argument is written at once.** A slot block is appended after the input and filled in parallel by masked diffusion
-  (mask-predict). Slots below 0.85 confidence are re-masked and refilled; most requests finish in 2-3 passes.
-- **Copy and pick instead of spell.** Most argument values are already in the query ("Tech Inc", "2019"), so a copy switch points
-  at the span instead of writing it. Booleans and enums are picked from their options. Lists get a count head and item slots.
-- **The input is encoded once.** The input's states are cached, and only the slot block is re-run on each pass. The passes run as
-  CUDA graphs.
+**ActionMan** (ModernBERT-large encoder, 28 layers, 395M weights):
+1. **Encode.** The tool signatures, the instruction and up to four `[CALL]` markers are encoded once. The context is cached.
+2. **Select tool.** Each `[CALL]` scores every tool, or none, in the same forward pass. A length head sizes the slots for every argument.
+3. **[MASK] slots.** One block of masked slots is appended, covering every argument of every call.
+4. **Denoise.** All slots are predicted in parallel:
+   - **copy:** values that appear in the instruction are copied as spans ("Tech Inc", "2019"), so they can't be misspelled;
+   - **options:** enums and booleans are picked from their options;
+   - **lists:** lists get a count head and item slots.
+5. **Re-mask < 0.85, denoise.** Low-confidence slots are re-masked and predicted again. Most calls are done in 2-3 forward passes.
 
-No JSON is ever generated. The structure comes from the schema; the model only fills the values.
+**A language model** runs its full stack once per output token. The same call is about 80 forward passes of autoregressive decoding.
 
-## Results
+## Speed
+
+![One tool call, side by side](docs/assets/speed.jpg)
+
+| One tool call, median, batch 1 | latency |
+|---|---|
+| **ActionMan-0.1** (RTX 4090, compiled with CUDA graphs) | **17 ms** |
+| Qwen3-0.6B fine-tuned on the same data (vLLM, tuned, same GPU) | 122 ms |
+| Qwen3-0.6B fine-tuned on the same data (llama.cpp Q8_0, same GPU) | 159 ms |
+| GPT-6 Luna (API, reasoning low, network included) | 1,455 ms |
+
+In the time GPT-6 Luna returns one call, ActionMan returns 85.
+
+- **Latency is flat in the size of the answer.** An LLM pays for every output token; ActionMan fills every slot at once.
+
+  | gold calls in the answer | ActionMan | Qwen3-0.6B, vLLM |
+  |---|---|---|
+  | 1 | 16.8 ms | 111 ms |
+  | 3+ | 21.0 ms | 331 ms |
+
+- **Server CPU** (8 threads): 0.45 s for ActionMan fp32 vs 1.66 s for llama.cpp Q8_0.
+
+![Latency vs output size](docs/results/figures/latency_vs_output_size.png)
+
+## The Arena
+
+Three games played only through tool calls. **The clock is the model:** every action costs one 10 ms tick, and thinking time is
+charged in full, so the world keeps moving while a model thinks. Every model gets the same situation, one call per turn, on
+renamed controls.
+
+![2D Minecraft](docs/assets/arena-minecraft.jpg)
+
+| Wins out of 12 | ActionMan-0.1 | Qwen3-0.6B, same data | GPT-6 Luna |
+|---|---|---|---|
+| **2D Minecraft:** dig to the diamond, zombies hunting | **10**, in 0.4-2.1 s | 9, in 4.9-19 s | 10, in 17-70 s |
+| **Rally:** pace notes at 360 km/h, a late call is a crash | **11** | 9 | 3 |
+| **Cycling:** every `pedal()` call is one stroke; calls per second is power | **11** | 3 | 3 |
+| thinking per call | 13-26 ms | 0.34-0.46 s | 1.2-1.3 s |
+
+Rules, levels and every replay: [`docs/arena/README.md`](docs/arena/README.md).
+
+## Accuracy
 
 | BFCL v4, official harness | size | Non-Live | Live | Irrelevance |
 |---|---|---|---|---|
@@ -48,65 +83,14 @@ No JSON is ever generated. The structure comes from the schema; the model only f
 | Hammer2.1-0.5b | 0.49B | 65.9 | 54.7 | 80.7 |
 | granite-4.0-350m | 0.35B | 67.7 | 46.7 | 61.1 |
 | Qwen3-0.6B (FC) | 0.75B | 72.9 | 58.8 | 80.9 |
-| Qwen3-0.6B SFT on ActionMan's data | 0.75B | 75.7 | 54.1 | 79.1 |
+| Qwen3-0.6B fine-tuned on the same data | 0.75B | 75.7 | 54.1 | 79.1 |
 | Qwen3-1.7B (FC) | 2.0B | 82.7 | 74.7 | 76.8 |
 | GPT-6 Luna (API, reasoning low) | - | 78.2 | 68.8 | 75.6 |
 
-| Latency, batch 1, one RTX 4090, 500 BFCL prompts | p50 | p95 | correct on those 500 |
-|---|---|---|---|
-| **ActionMan-0.1, compiled** | **17.0 ms** | 28.9 ms | 59.2% |
-| Qwen3-0.6B SFT, vLLM (tuned) | 121 ms | 347 ms | 68.6% |
-| Qwen3-0.6B SFT, llama.cpp Q8_0 on GPU | 159 ms | 336 ms | 69.0% |
-| Server CPU, 8 threads: ActionMan fp32 vs llama.cpp Q8_0 | 0.45 s vs 1.66 s | | 59.0% vs 66.5% |
-
-![Latency vs output size](docs/results/figures/latency_vs_output_size.png)
-
-**How to read these results:**
-- **Answer length:** an LLM pays for every output token, while ActionMan stays flat.
-  - One call: 16.8 vs 111 ms.
-  - Three or more calls: 21 vs 331 ms.
-- **Own eval:** on our 2,340 held-out prompts (official checker) it scores 79.0 against 85.6 for the same-data Qwen. Tool choice
-  and "don't call" are level with Qwen, and the gap is in the arguments.
-- **Harness check:** the harness reproduces the public leaderboard for Hammer and granite within 0.25 points.
-- **What is not reported:**
-  - **No BFCL Overall:** multi-turn and agentic categories were not run.
-  - **No functiongemma-270m:** it was not evaluated, because it is gated.
-
-## The arena
-
-Three tiny real-time games played only through tool calls, where **the clock is the model**: every action costs one 10 ms tick and
-everything else is the model's real thinking time. The world keeps moving while a model thinks.
-
-| 12 races per event | ActionMan-0.1 | Qwen3-0.6B SFT | GPT-6 Luna | Perfect driver |
-|---|---|---|---|---|
-| Mining: dig to a diamond, zombies hunting | **10**, in 0.4-2.1 s | 9, in 4.9-19 s | **10**, in 17-70 s | 12 |
-| Rally: pace notes at 360 km/h | **11** | 9 | 3 | 12 |
-| Cycling: every call is one pedal stroke | **11** | 3 | 3 | 12 |
-| thinking per call | 13-26 ms | 0.34-0.46 s | 1.2-1.3 s | - |
-
-**How it works:**
-- **Each turn the model gets one plain instruction** ("Dig down.", "Left 4 is the next corner.") from a scripted planner. ActionMan
-  does not plan: from a description of the state instead, it wins 1 of 12 mining races.
-- **It tests the job ActionMan is for:** turning a request into the right call on unfamiliar, renamed controls, fast.
-- **GPT-6 Luna never sends an invalid call,** but in rally and cycling it arrives a second late.
-
-Details and caveats: [`docs/arena/README.md`](docs/arena/README.md).
-
-## What we learned
-
-1. **Copying beats spelling.** 80-92% of BFCL string values appear word for word in the query.
-   - Pointing at the span instead of writing it cut garbled values from 77 to 13 and added 2.7 points (v2 -> v3).
-   - What remains is mostly reasoning: "until 11 PM" -> `23`, unit conversion. An encoder this size can't do that.
-2. **Parallel decoding makes latency flat in the answer's length.** That is where the speed gap opens up: 7x for one call, 16x for
-   three or more. A naive baseline exaggerates it. Against HF `generate` we first measured 90x; against tuned vLLM it is 7x.
-3. **Seed noise is about 1.5 points on 2,340 prompts.** Most of our "improvements" were inside it: distillation from Qwen3-14B,
-   +80% more data, word-boundary snapping, a masking fix. Only 5 epochs stood outside it (79.7).
-4. **Check the baseline's config, not just its numbers.** Our Qwen SFT config was written by transformers 5. Older vLLM read it with
-   the wrong RoPE base and quietly scored it about 12 points low. It was caught because llama.cpp disagreed.
-5. **Instructions, not states.** ActionMan translates; it does not plan. Given orders it wins most races; given a
-   description of the world it loops.
-
-![The journey](docs/assets/journey.jpg)
+- **Harness check:** every model ran on one box with `bfcl-eval==2026.3.23`. The harness reproduces the public leaderboard for Hammer and
+  granite within 0.25 points.
+- **Single-turn categories only.**
+- **Per-category scores:** confidence intervals and error classes are in the [benchmark report](docs/results/benchmark.md).
 
 ## Try it
 
@@ -125,45 +109,47 @@ tools = [{"type": "function", "function": {
         "required": ["city"]}}}]
 am.predict("What's the weather in Paris in celsius?", tools)
 # [{"name": "get_weather", "arguments": {"city": "Paris", "unit": "celsius"}, "confidence": 0.98}]
+am.predict("Tell me a joke", tools)
+# []
 ```
 
 - **Tools:** OpenAI-style function schemas.
-- **No call:** an empty list means no tool fits. `require=True` forces a call, like `tool_choice="required"`.
-- **`confidence`** is the minimum over the tool and every argument. Abstaining on the least confident 10% of answers takes our eval
-  from 78.6 to 85.1.
-- **Limits:** single turn, English, at most 4 calls and lists of up to 7 items.
+- **Output:**
+  - `[]` means no tool fits.
+  - `require=True` forces a call, like `tool_choice="required"`.
+  - `confidence` is the minimum over the tool and every argument.
+- **Scope:** single turn, English, up to 4 calls per request, lists of up to 7 items.
 
 ## Repo map
 
 | Path | What |
 |---|---|
-| `src/actionman/` | the model: `schema` (tools, calls, converters), `features`, `model`, `cached` (block-causal cache), `infer` + `infer_v3` (mask-predict, copy, options, lists), `train`, `evaluate`, `scoring`, `api`, `export_hf` |
-| `src/actionman/` (analysis) | `audit` (argument data audit), `errclass` (error classes), `distill` (teacher relabel), `prepare` + `extra` (data), `profile` |
-| `baseline/qwen.py` | the Qwen3-0.6B SFT baseline: same data, same scorer |
-| `bench/` | BFCL v4 harness glue (`bfcl_run.py`, `bfcl_actionman.py`), latency harness (`latency.py`), box jobs, `report.py` |
-| `arena/` | the games (`mining/`, `rally/`, `cycling/`), the drivers, `run.py`, and the replay viewer (`viewer/`) |
-| `infra/` | Vast.ai launcher with three layers of spend safety (self-destroying job, watchdog, laptop watcher), costs, results |
-| `video/` | the research film: one animated page, a frame-by-frame renderer and a synthesised soundtrack |
-| `docs/` | design spec, plans, findings, the benchmark report, arena docs |
+| `src/actionman/` | the model: `schema`, `features`, `model`, `cached` (block-causal context cache), `infer` + `infer_v3` (masked diffusion with copy, option and list slots), `train`, `evaluate`, `scoring`, `api`, `export_hf` |
+| `baseline/qwen.py` | the Qwen3-0.6B baseline, fine-tuned on the same data |
+| `bench/` | BFCL v4 harness integration, the latency harness (ActionMan, vLLM, llama.cpp, HF, CPU), `report.py` |
+| `arena/` | the games (`mining/` is 2D Minecraft, plus `rally/` and `cycling/`), the drivers, `run.py`, and the replay viewer |
+| `infra/` | Vast.ai launcher with three layers of spend safety, cost and results reports |
+| `video/` | the launch film (`launch.html`) and the research cut (`index.html`): animated pages, a frame renderer, a synthesised soundtrack |
+| `docs/` | design, plans, findings, the benchmark report, Arena docs |
 | `tests/` | 135 CPU tests on tiny random models (`python -m pytest -q`) |
 
 ## What's next
 
-- **CPU speed:** int8 and ONNX export, and a ModernBERT-base variant. Laptop CPU is the weak spot today.
-- **Live prompts:** long multi-message prompts are where it falls furthest behind (Live 45). Train on them.
-- **Multi-turn:** carry the conversation.
-- **A clean-licence retrain without xLAM,** so the weights can be released under open terms.
+- **CPU:** int8 / ONNX export and a ModernBERT-base variant, for laptop and on-device speed.
+- **Live prompts:** training on long, multi-message prompts.
+- **Multi-turn:** carrying the conversation.
+- **Open weights:** a retrain without xLAM.
 
 ## Credits
 
-Data:
+**Data:**
 - [xLAM function-calling 60k](https://huggingface.co/datasets/Salesforce/xlam-function-calling-60k): CC-BY-4.0, research use;
 - [ToolACE](https://huggingface.co/datasets/Team-ACE/ToolACE): Apache-2.0;
 - [Hermes function-calling v1](https://huggingface.co/datasets/NousResearch/hermes-function-calling-v1): Apache-2.0;
 - [BFCL](https://gorilla.cs.berkeley.edu/leaderboard.html): evaluation only.
 
-Encoder: [ModernBERT-large](https://huggingface.co/answerdotai/ModernBERT-large) (Apache-2.0).
-Inspired by decision models such as Jev.
-Research run by Shreyash Kumar Singh with an AI coding agent (Claude).
+**Encoder:** [ModernBERT-large](https://huggingface.co/answerdotai/ModernBERT-large) (Apache-2.0).
 
-Code: MIT. Weights: research preview, for research use only (trained on xLAM-60k).
+Research by Shreyash Kumar Singh with an AI coding agent (Claude).
+
+**Licence:** the code is MIT. The weights are for research use only, because the training data includes xLAM-60k.

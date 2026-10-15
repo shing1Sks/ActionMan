@@ -11,7 +11,8 @@ __pycache__/
 /hf_export/
 /video/node_modules/
 /video/*.mp4
-/video/music.wav
+/video/*.wav
+/video/launch-v1.html
 /video/stills/
 /video/film-video.mp4
 /context.txt

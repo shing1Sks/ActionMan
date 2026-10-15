@@ -1,4 +1,4 @@
-# Rally
+# Arena event: Rally
 
 Drive a point-to-point special stage from the co-driver's pace notes. Files: `arena/rally/` (world, observer, plan),
 `arena/viewer/games/rally.js`, `tests/test_arena_rally.py`.

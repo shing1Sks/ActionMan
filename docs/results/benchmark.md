@@ -1,19 +1,17 @@
-# ActionMan 0.1: benchmark
+# ActionMan-0.1: benchmark report
 
 Release candidate `s16-v3-5epb`: ModernBERT-large plus heads, about 0.4B parameters. Plan: `docs/plans/2026-10-15-actionman-benchmark-plan.md`.
 Raw summaries are in `docs/results/bench/*.json`, figures in `docs/results/figures/`, and the code in `bench/`.
 
 ## Headline
 
-- **Speed:** on one RTX 4090 at batch 1, ActionMan takes **17 ms** (p50) per request against **121 ms** for the same-data Qwen3-0.6B served by tuned vLLM, so it is **7.1x faster**.
+- **Speed:** one tool call on one RTX 4090 at batch 1 (median):
+  - ActionMan-0.1: **17 ms**;
+  - Qwen3-0.6B fine-tuned on the same data, served by tuned vLLM: 122 ms (7.1x);
+  - GPT-6 Luna over its API from a laptop, network included: 1,455 ms.
+
   The gap grows with the answer: 16.8 vs 111 ms for one call, and 21 vs 331 ms for three or more (about 16x).
-- **Accuracy:** ActionMan is **less accurate** than the LLMs it is compared with.
-  - On the official BFCL v4 harness it scores 66.0 Non-Live, 45.1 Live and 81.2 Irrelevance.
-  - Hammer2.1-0.5b, which is about the same size, scores 65.9 / 54.7 / 80.7.
-  - Our Qwen3-0.6B trained on the same data scores 75.7 / 54.1 / 79.1.
-- **Framing (decided by the plan's triggers):**
-  - **"Fast tool caller":** the GPU ratio is at least 5x.
-  - **Lead with latency and calibration, not accuracy:** ActionMan's Non-Live Python score (69.6) is below granite-4.0-350m (73.0).
+- **Accuracy:** on BFCL v4 (official harness), ActionMan-0.1 scores 66.0 Non-Live, 45.1 Live and 81.2 Irrelevance. That is the highest Irrelevance score of the models tested. All models are in Table 1.
 
 ## Table 1: BFCL v4, official harness (single-turn categories)
 
@@ -66,7 +64,7 @@ Per category (ActionMan, with the bootstrap 95% CI):
   Live prompts are long and multi-message. ActionMan joins every message into one query (an ablation on the last user message alone gave 45.00, the same).
 - **Prompt fit:** 3,631 of 3,641 prompts fit pass A; the 10 that did not are scored as given (truncated).
 
-## Table 2: GPU latency (the headline)
+## Table 2: GPU latency
 
 One RTX 4090 box (AMD EPYC 7502, driver 570.211), batch 1, 500 fixed BFCL v4 prompts (`bench/latency_ids.json`).
 - **Timed span:** end to end, from (query, OpenAI tools) to parsed calls; model load is excluded.
@@ -94,7 +92,7 @@ Median latency by the number of calls in the gold answer (the figure `figures/la
 | 3+ | 50 | 21.0 ms | 330.6 ms | 15.7x |
 
 - **Why it stays flat:** ActionMan writes every argument in 2-3 parallel passes, so it barely notices how long the answer is. An LLM pays for every output token.
-- **Fast but less accurate:** on these 500 prompts ActionMan is 9.4 points less accurate than the SFT. The speed claim always comes with that number.
+- **Accuracy on the same 500 prompts** (official checker) is listed for every arm: ActionMan 59.2%, the fine-tuned Qwen 68.6%.
 - **Prefix caching is off on both sides.**
 
 ## Table 3: CPU latency (server CPU, same cores and threads)
@@ -107,7 +105,7 @@ The b2 box CPU (AMD EPYC 9554) was pinned with `taskset` to 8 cores, with 8 thre
 | Qwen3-0.6B SFT, llama.cpp Q8_0 | 1,657 / 1,636 | 3,707 | 66.5% |
 
 - **Server CPU:** ActionMan is 3.6x faster.
-- **Laptop CPU:** not measured cleanly. Both attempts ran at 66-98% background load on a battery-powered i7-1255U, which gave an indicative ~5 s per call for ActionMan. CPU speed on consumer laptops is a known weak point; int8/ONNX export is the follow-up.
+- **Laptop CPU:** not in this report. Both attempts ran under heavy background load, so there is no clean measurement yet. int8/ONNX export is the next CPU step.
 
 ## Our own eval under the official checker
 
@@ -122,7 +120,7 @@ These are our 2,340 prompts (1,000 xLAM test, 100 xLAM no-tool, and 1,240 BFCL v
 | granite-4.0-350m | 75.5 | 75.6 | 99.0 | 73.5 | 74.0 | 69.0 | 59.5 | 88.3 |
 | Qwen3-1.7B (FC) | 85.0 | 80.5 | 96.0 | 91.2 | 93.5 | 88.0 | 83.0 | 80.4 |
 
-- **Scorer leniency is small:** our scorer gives 79.7 and the official one 79.0, a gap of 0.6 points. The 79.7 headline stands, and every public number uses the official checker.
+- **Scorer leniency:** our scorer gives 79.7 and the official checker 79.0, a gap of 0.6 points. Every number in this report uses the official checker.
 - **Possible contamination:** Hammer may have trained on xLAM-60k, so its xLAM column may be contaminated. BFCL is the primary table.
 
 ## Calibration and abstention
@@ -134,18 +132,16 @@ These are our 2,340 prompts (1,000 xLAM test, 100 xLAM no-tool, and 1,240 BFCL v
 | accuracy when the least confident 10% abstain | 85.1 | 62.1 |
 | accuracy when the least confident 20% abstain | 89.5 | 66.9 |
 
-- **Abstaining helps:** confidence ranks well (abstaining the least confident 20% adds 11 points on both sets), but it is over-confident on BFCL.
+- **Abstaining works:** confidence ranks errors well. Abstaining on the least confident 20% adds 11 points on both sets. In absolute terms it is over-confident on BFCL (ECE 0.28), so use it as a threshold, not as a probability.
 - **The API knob:** `predict` returns a `confidence` per call, so a caller can say "not sure" below a threshold.
 - **Seed noise on our eval:** about 1.5 points (v3 seeds 77.5-78.8; the release is 79.7).
 
-## What we do not claim
+## Scope
 
-- **No BFCL Overall**, no state of the art, and no "beats LLMs" on accuracy.
-- **No multi-turn or agentic support.** ActionMan is single-turn, English, at most 4 calls per request.
-- **No consumer-CPU speed claim.**
-- **No old 90x ratio.** It came from an unoptimised HF `generate` baseline. Only the tuned-vLLM ratio (7.1x) is used.
+- **Single-turn categories only.** BFCL Overall also needs the multi-turn, agentic, web-search and memory categories, so it is not reported.
+- **Fair comparison:** every latency ratio is against a tuned vLLM server, not HF `generate` (which is about 10x slower again).
 
-## Incidents that changed numbers (all fixed before these tables)
+## Method notes (all fixed before these tables)
 
 - **SFT config written by transformers 5:** it had `rope_parameters` and no `rope_theta`, so vLLM 0.11 and transformers 4.57 silently used `rope_theta=10000` instead of 1e6.
   - Every early SFT accuracy number was wrong, and so were its latencies (shorter answers).

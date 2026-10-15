@@ -244,7 +244,7 @@ function vitals(r, f) {
 }
 
 A.games.mining = {
-  title: "Mining", tagline: "Dig to the diamond before the zombies get you.",
+  title: "2D Minecraft", tagline: "Dig to the diamond before the zombies get you.",
   levels: [
     { name: "Warm-up", desc: "No zombies. The diamond sits a few blocks down." },
     { name: "Survive", desc: "Zombies hunt the miner. Every slow turn costs health." },
