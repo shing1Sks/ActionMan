@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "actionman"
+version = "0.1.0"
+description = "A 0.4B non-autoregressive tool caller: one encoder read picks the tool, masked diffusion fills every argument at once."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = ["torch>=2.4", "transformers>=5.0", "safetensors", "huggingface_hub"]
+
+[project.optional-dependencies]
+dev = ["pytest", "datasets"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
