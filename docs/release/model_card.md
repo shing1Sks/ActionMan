@@ -87,7 +87,7 @@ Three real-time games played only through tool calls, where thinking time is cha
 | GPT-6 Luna (API, reasoning low) | - | 78.2 | 68.8 | 75.6 |
 
 - **The run:** every model ran with `bfcl-eval==2026.3.23` on one box, single-turn categories only.
-- **Full report:** per-category scores, confidence intervals and error classes are in [benchmark.md](https://github.com/shing1Sks/ActionMan/blob/dev/docs/results/benchmark.md).
+- **Full report:** per-category scores, confidence intervals and error classes are in [benchmark.md](https://github.com/shing1Sks/ActionMan/blob/main/docs/results/benchmark.md).
 
 ## Usage
 
