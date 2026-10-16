@@ -1,6 +1,8 @@
-# ActionMan
+<p align="center"><img src="docs/assets/actionman-logo.svg" width="132" alt="ActionMan logo: an A with a red cape"></p>
 
-**Decision models choose. Action models act.**
+<h1 align="center">ActionMan</h1>
+
+<p align="center"><b>Decision models choose. Action models act.</b></p>
 
 Decision models read the input once, score every option in parallel, and answer in milliseconds. But a decision is not an
 action. A tool call needs arguments, and arguments are text, which until now meant an LLM decoding one token at a time.

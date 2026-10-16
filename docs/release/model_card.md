@@ -18,9 +18,11 @@ datasets:
 - NousResearch/hermes-function-calling-v1
 ---
 
-# ActionMan-0.1
+<p align="center"><img src="assets/actionman-logo.png" width="132" alt="ActionMan logo: an A with a red cape"></p>
 
-**Decision models choose. Action models act.**
+<h1 align="center">ActionMan-0.1</h1>
+
+<p align="center"><b>Decision models choose. Action models act.</b></p>
 
 ActionMan-0.1 is an action model: a 0.4B encoder that selects the tool in one forward pass and writes every argument with
 masked diffusion. It finishes in 2-3 forward passes, with no autoregressive decoding and no JSON generated.
